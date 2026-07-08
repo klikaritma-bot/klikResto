@@ -286,7 +286,7 @@ var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'Warung Bakmi Bedjo' },
         { Key: 'WhatsAppNumber', Value: '6281234567890' },
-        { Key: 'Address', Value: 'Jl. Malioboro No. 1, Yogyakarta' },
+        { Key: 'Address', Value: 'Perum Solo Elok No: 4-5 Mojosongo Solo' },
         { Key: 'Rekening', Value: 'BCA 0123456789 a.n. Bedjo Suryanto' },
         { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' }
     ],
@@ -456,7 +456,7 @@ window.togglePaymentInfo = function() {
 // ================= RENDER LOGIC =================
 function processInitData() {
     var restoName = 'Warung Bakmi Bedjo';
-    var restoAddress = 'Jl. Malioboro No. 1';
+    var restoAddress = 'Perum Solo Elok No:4-5 Mojosongo Solo';
     (db.settings || []).forEach(s => {
         if(s.Key === 'RestoName' && s.Value) restoName = s.Value;
         if(s.Key === 'Address' && s.Value) restoAddress = s.Value;
