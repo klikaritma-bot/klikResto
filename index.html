@@ -194,6 +194,16 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        .delay-show {
+            opacity: 0;
+            visibility: hidden;
+            animation: showDelayed 0.5s forwards;
+            animation-delay: 4s; 
+        }
+        @keyframes showDelayed {
+            to { opacity: 1; visibility: visible; }
+        }
+
         .view-section { display: none; animation: fadeIn 0.3s; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -238,6 +248,10 @@
     <div id="loader">
         <div class="spinner"></div>
         <p class="mt-3 fw-bold text-primary-custom">Memuat Warung...</p>
+        <!-- ANTI-STUCK BUTTON -->
+        <button id="btn-force-load" class="btn btn-danger mt-3 delay-show" style="border-radius: 20px; font-size: 0.8rem;" onclick="forceSimulation()">
+            <i class="bi bi-exclamation-triangle"></i> Terlalu lama? Paksa Masuk (Simulasi)
+        </button>
     </div>
 
     <!-- Top Navbar -->
@@ -437,7 +451,6 @@
 // Jika dikosongkan (""), aplikasi akan otomatis menggunakan Mock Data (Simulasi).
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
 
-
 // ================= GENERATE PWA MANIFEST =================
 function setupPWA() {
     var manifest = {
@@ -494,7 +507,7 @@ var lastKnownOrderCount = 0;
 function startAdminPolling() {
     var sound = document.getElementById('order-sound');
     adminPollingInterval = setInterval(function() {
-        if (!GAS_API_URL) {
+        if (!GAS_API_URL || GAS_API_URL.trim() === "") {
             // Simulasi Pesanan Baru secara acak
             if(Math.random() > 0.7) {
                 var simID = "ORD-SIM-" + Math.floor(Math.random() * 10000);
@@ -560,8 +573,6 @@ window.toggleRole = function() {
         lastKnownOrderCount = db.orders ? db.orders.length : 0;
         
         startAdminPolling(); 
-        
-        // AUTO NAVIGASI KE ADMIN (Solusi masalah Anda)
         window.navigate('admin');
         
         document.getElementById('order-sound').play().then(function(){
@@ -649,7 +660,7 @@ window.processCheckout = function() {
     var orderData = { name: name, phone: phone, type: type, address: address, payment: payment, total: total, cart: state.cart };
     document.getElementById('loader').style.display = 'flex';
 
-    if (!GAS_API_URL) {
+    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
         setTimeout(function() {
             var simOrderID = "ORD-SIM-" + Math.floor(Math.random() * 10000);
             if(!db.orders) db.orders = [];
@@ -937,44 +948,74 @@ function renderUI() {
     window.updateCartBadge();
 }
 
+window.forceSimulation = function() {
+    document.getElementById('loader').style.display = 'none';
+    try {
+        db = JSON.parse(JSON.stringify(mockDB));
+        lastKnownOrderCount = db.orders.length;
+        processInitData();
+        renderUI();
+        if(typeof Swal !== 'undefined') Swal.fire('Mode Simulasi', 'Gagal memuat dari API, menggunakan data simulasi.', 'info');
+    } catch (e) {
+        alert("Terjadi kesalahan sistem: " + e.message);
+    }
+};
+
 function initApp() {
     setupPWA(); 
     document.getElementById('loader').style.display = 'flex';
     
-    if (!GAS_API_URL) {
+    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
         console.log("Menjalankan Mode Simulasi (Dummy Data)");
-        setTimeout(function() {
-            db = JSON.parse(JSON.stringify(mockDB));
-            lastKnownOrderCount = db.orders.length;
+        setTimeout(window.forceSimulation, 800);
+    } else {
+        console.log("Mengambil Data dari GAS Backend...");
+        fetch(GAS_API_URL + "?action=getData", {
+            method: 'GET',
+            mode: 'cors'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Respons jaringan gagal");
+            // Tangkap jika Apps Script mengembalikan HTML (misal layar login)
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return response.json();
+            } else {
+                return response.text().then(text => {
+                    throw new Error("API tidak mengembalikan JSON. Pastikan akses Apps Script diatur ke 'Anyone'.");
+                });
+            }
+        })
+        .then(parsed => {
+            if(parsed.error) {
+                document.getElementById('loader').style.display = 'none';
+                if(typeof Swal !== 'undefined') Swal.fire('Info API', parsed.error, 'warning');
+                window.forceSimulation();
+                return;
+            }
+            db = parsed;
+            db.settings = db.settings || [];
+            db.categories = db.categories || [];
+            db.menus = db.menus || [];
+            db.orders = db.orders || [];
+            
+            lastKnownOrderCount = db.orders.length; 
             processInitData();
             renderUI();
             document.getElementById('loader').style.display = 'none';
-        }, 800);
-    } else {
-        console.log("Mengambil Data dari GAS Backend...");
-        fetch(GAS_API_URL + "?action=getData")
-            .then(response => response.json())
-            .then(parsed => {
-                if(parsed.error) {
-                    Swal.fire('Info', 'Mohon jalankan fungsi setupDatabase() di Apps Script.', 'warning');
-                    return;
-                }
-                db = parsed;
-                db.settings = db.settings || [];
-                db.categories = db.categories || [];
-                db.menus = db.menus || [];
-                db.orders = db.orders || [];
-                
-                lastKnownOrderCount = db.orders.length; 
-                processInitData();
-                renderUI();
-                document.getElementById('loader').style.display = 'none';
-            })
-            .catch(err => {
-                console.error("Fetch Error:", err);
-                Swal.fire('Error Server', 'Gagal memuat data dari API. Pastikan URL benar.', 'error');
-                document.getElementById('loader').style.display = 'none';
-            });
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            document.getElementById('loader').style.display = 'none'; // Wajib di awal agar layar tertutup
+            if(typeof Swal !== 'undefined') {
+                Swal.fire('Koneksi Gagal', err.message + ' (Beralih ke mode simulasi)', 'error').then(() => {
+                    window.forceSimulation();
+                });
+            } else {
+                alert('Koneksi Gagal: ' + err.message);
+                window.forceSimulation();
+            }
+        });
     }
 }
 
