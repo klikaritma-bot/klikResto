@@ -451,6 +451,9 @@
 // Jika dikosongkan (""), aplikasi akan otomatis menggunakan Mock Data (Simulasi).
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
 
+// FLAG PENGAMAN: Untuk mencegah data dummy ditimpa oleh response server yang telat datang
+var isSimulationForced = false;
+
 // ================= GENERATE PWA MANIFEST =================
 function setupPWA() {
     var manifest = {
@@ -949,6 +952,7 @@ function renderUI() {
 }
 
 window.forceSimulation = function() {
+    isSimulationForced = true; // Kunci data agar tidak tertimpa
     document.getElementById('loader').style.display = 'none';
     try {
         db = JSON.parse(JSON.stringify(mockDB));
@@ -975,6 +979,7 @@ function initApp() {
             mode: 'cors'
         })
         .then(response => {
+            if(isSimulationForced) return null; // Cegah pemrosesan jika sudah simulasi
             if (!response.ok) throw new Error("Respons jaringan gagal");
             // Tangkap jika Apps Script mengembalikan HTML (misal layar login)
             const contentType = response.headers.get("content-type");
@@ -987,6 +992,7 @@ function initApp() {
             }
         })
         .then(parsed => {
+            if(!parsed || isSimulationForced) return; // Cek kembali flag
             if(parsed.error) {
                 document.getElementById('loader').style.display = 'none';
                 if(typeof Swal !== 'undefined') Swal.fire('Info API', parsed.error, 'warning');
