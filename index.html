@@ -789,11 +789,11 @@ function formatRp(angka) {
 
 function processInitData() {
     var restoName = 'Warung Bakmi Bedjo';
-    var restoAddress = '-';
+    var restoAddress = 'Jl. Malioboro No. 1, Yogyakarta';
     var settings = db.settings || [];
     for(var i=0; i<settings.length; i++) {
-        if(settings[i].Key === 'RestoName') restoName = settings[i].Value;
-        if(settings[i].Key === 'Address') restoAddress = settings[i].Value;
+        if(settings[i].Key === 'RestoName' && settings[i].Value) restoName = settings[i].Value;
+        if(settings[i].Key === 'Address' && settings[i].Value) restoAddress = settings[i].Value;
     }
     document.getElementById('resto-name').innerText = restoName;
     document.getElementById('resto-address').innerText = restoAddress;
@@ -953,9 +953,9 @@ window.forceSimulation = function() {
     try {
         db = JSON.parse(JSON.stringify(mockDB));
         lastKnownOrderCount = db.orders.length;
-        processInitData();
-        renderUI();
-        if(typeof Swal !== 'undefined') Swal.fire('Mode Simulasi', 'Gagal memuat dari API, menggunakan data simulasi.', 'info');
+        processInitData(); // Memaksa render ulang text header
+        renderUI(); // Memaksa render ulang menu
+        if(typeof Swal !== 'undefined') Swal.fire('Mode Simulasi', 'Menggunakan data dummy (Warung Bakmi Bedjo).', 'info');
     } catch (e) {
         alert("Terjadi kesalahan sistem: " + e.message);
     }
