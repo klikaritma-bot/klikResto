@@ -68,9 +68,9 @@
         /* Item Keranjang Biasa (List Horizontal) */
         .cart-card { background: white; border-radius: 16px; margin-bottom: 10px; display: flex; padding: 10px; border: 1px solid #f1f1f1; box-shadow: 0 2px 8px rgba(0,0,0,0.02); align-items: center;}
         
-        /* ================= BOTTOM NAV & FLOATING WA TENGAH ================= */
+        /* ================= BOTTOM NAV (3 MENU & WA TENGAH) ================= */
         .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 8px 0 12px 0; z-index: 1000; border-top-left-radius: 20px; border-top-right-radius: 20px; align-items: flex-end;}
-        .nav-item { text-align: center; color: #a0a0a0; cursor: pointer; flex-grow: 1; position: relative; width: 33.3%;}
+        .nav-item { text-align: center; color: #a0a0a0; cursor: pointer; flex-grow: 1; position: relative; width: 33.33%;}
         .nav-item.active { color: var(--primary); }
         .nav-item i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
         .nav-item span { font-size: 0.65rem; font-weight: 600; }
@@ -145,7 +145,7 @@
         <div id="view-home" class="view-section active">
             
             <div id="home-banner-container">
-                <!-- Di-inject via JS sesuai dengan Setting -->
+                <!-- Di-inject via JS sesuai dengan Setting (Demo / Client) -->
             </div>
 
             <!-- Kategori -->
@@ -164,9 +164,9 @@
             <div id="menu-container" class="menu-grid mb-4"></div>
             
             <!-- Area CTA klikResto (Ditampilkan HANYA jika APP_MODE = 'DEMO') -->
-            <div id="cta-klikresto-banner" class="text-center p-4 rounded-4 shadow-sm" style="background:#f1f8e9; border: 1px dashed var(--primary); display:none; margin-bottom: 20px;">
+            <div id="cta-klikresto-banner" class="text-center p-4 rounded-4 shadow-sm" style="background:#f4f6f8; border: 1px dashed var(--primary); display:none; margin-bottom: 20px;">
                 <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" width="40" class="mb-2">
-                <h6 class="fw-bold text-success mb-1">Ingin punya WebApp seperti ini?</h6>
+                <h6 class="fw-bold text-primary-custom mb-1">Ingin punya WebApp seperti ini?</h6>
                 <p class="small text-muted mb-3">Aplikasi kasir & pemesanan online tanpa potongan komisi, khusus untuk warung & restoran Anda.</p>
                 <a href="https://klikresto.com" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
             </div>
@@ -408,12 +408,12 @@
 <!-- SCRIPT UTAMA PENGENDALI APLIKASI -->
 <!-- ============================================== -->
 <script>
-// 🚀 PENGATURAN MODE APLIKASI (PENTING!)
-// "DEMO" = Menggunakan Dummy klikResto (Warung Bakmi Bedjo) & Banner Iklan klikResto.
-// "CLIENT" = Data Kosong (Blank), Bersih dari iklan, Siap diserahkan ke Client/Toko Asli.
+// 🚀 PENGATURAN MODE APLIKASI
+// "DEMO" = Mengabaikan GAS URL, memuat data dummy lokal instan, memunculkan iklan CTA klikResto.
+// "CLIENT" = Wajib mengisi GAS_API_URL untuk memuat data asli, layar bersih dari iklan CTA.
 const APP_MODE = "DEMO"; 
 
-// 🚀 KONFIGURASI API (GOOGLE APPS SCRIPT URL - Jika ada)
+// 🚀 KONFIGURASI API (GOOGLE APPS SCRIPT URL)
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
 
 // ================= DATA =================
@@ -450,8 +450,8 @@ var state = { cart: [], posCart: [], currentView: 'home', role: 'guest', activeC
 // ================= DEKLARASI FUNGSI GLOBAL =================
 window.setupPWA = function() {
     var manifest = {
-        "name": "klikResto App",
-        "short_name": "klikResto",
+        "name": (APP_MODE === 'DEMO' ? "klikResto App" : "Resto App"),
+        "short_name": "Delivery",
         "start_url": ".",
         "display": "standalone",
         "background_color": "#ffffff",
@@ -468,27 +468,30 @@ window.setupPWA = function() {
 window.formatRp = function(angka) { return "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
 window.processInitData = function() {
-    var restoName = 'klikResto'; var restoAddress = 'Lokasi...'; var wa = '62812';
+    var restoName = 'klikResto'; var restoAddress = 'Lokasi...'; var wa = '6281234567890';
     (db.settings || []).forEach(s => {
         if(s.Key === 'RestoName' && s.Value) restoName = s.Value;
         if(s.Key === 'Address' && s.Value) restoAddress = s.Value;
         if(s.Key === 'WhatsAppNumber' && s.Value) wa = s.Value;
     });
+    
     document.getElementById('resto-name').innerText = restoName;
     document.getElementById('resto-address').innerText = restoAddress;
     document.getElementById('wa-float-link').href = 'https://wa.me/' + wa;
     
+    // Tampilan Home disesuaikan berdasarkan Mode (DEMO vs CLIENT)
     if(APP_MODE === 'DEMO') {
         document.getElementById('home-banner-container').innerHTML = `
-            <div class="rounded-card text-white p-4 mb-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
-                <h4 class="fw-bold">${restoName} 🍜</h4><p class="mb-0 small">Kini hadir melayani pemesanan online langsung ke WA Anda!</p>
+            <div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);">
+                <h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Kini hadir melayani pemesanan online langsung ke WA Anda!</p>
             </div>`;
         document.getElementById('cta-klikresto-banner').style.display = 'block';
     } else {
         document.getElementById('home-banner-container').innerHTML = `
-            <div class="rounded-card text-white p-4 mb-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+            <div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);">
                 <h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Selamat datang di layanan pesan antar kami.</p>
             </div>`;
+        document.getElementById('cta-klikresto-banner').style.display = 'none';
     }
 };
 
@@ -502,15 +505,17 @@ window.renderCategories = function() {
 };
 
 window.renderHome = function() {
-    var searchTerm = document.getElementById('search-menu') ? document.getElementById('search-menu').value.toLowerCase() : "";
+    var searchEl = document.getElementById('search-menu');
+    var searchTerm = searchEl ? searchEl.value.toLowerCase() : "";
     var filtered = (db.menus || []).filter(m => (state.activeCategory === 'All' || m.CategoryID === state.activeCategory) && m.Name.toLowerCase().includes(searchTerm));
     
     var html = '';
-    if (filtered.length === 0) html = '<div class="text-center p-4 text-muted w-100" style="grid-column: span 2;">Menu tidak ditemukan / Belum ada produk.</div>';
-    else {
+    if (filtered.length === 0) {
+        html = '<div class="text-center p-4 text-muted w-100" style="grid-column: span 2;">Menu tidak ditemukan / Belum ada produk.</div>';
+    } else {
         filtered.forEach(menu => {
-            var priceHtml = '<div class="price">' + formatRp(menu.Price) + '</div>';
-            if (menu.PromoPrice && menu.PromoPrice > 0) priceHtml = '<div class="price text-danger">' + formatRp(menu.PromoPrice) + ' <small class="text-muted text-decoration-line-through" style="font-size:0.7rem">' + formatRp(menu.Price) + '</small></div>';
+            var priceHtml = '<div class="price">' + window.formatRp(menu.Price) + '</div>';
+            if (menu.PromoPrice && menu.PromoPrice > 0) priceHtml = '<div class="price text-danger">' + window.formatRp(menu.PromoPrice) + ' <small class="text-muted text-decoration-line-through" style="font-size:0.7rem">' + window.formatRp(menu.Price) + '</small></div>';
             
             var badgeHtml = '';
             var btnHtml = `<button class="add-btn-full" onclick="window.addToCart('${menu.ID}')"><i class="bi bi-plus-lg"></i> Tambah</button>`;
@@ -533,6 +538,7 @@ window.renderHome = function() {
         });
     }
     document.getElementById('menu-container').innerHTML = html;
+    
     var catTitle = 'Semua Menu';
     if(state.activeCategory !== 'All') { var c = (db.categories||[]).find(x => x.ID === state.activeCategory); if(c) catTitle = c.Name; }
     document.getElementById('menu-section-title').innerText = catTitle;
@@ -571,7 +577,7 @@ window.updateCartBadge = function() {
     var badge = document.getElementById('nav-cart-badge');
     if(totalQty > 0) {
         badge.innerText = totalQty; badge.style.display = 'inline-block';
-        document.getElementById('float-qty').innerText = totalQty; document.getElementById('float-total').innerText = formatRp(subtotal);
+        document.getElementById('float-qty').innerText = totalQty; document.getElementById('float-total').innerText = window.formatRp(subtotal);
     } else {
         badge.style.display = 'none'; document.getElementById('floating-cart').style.display = 'none';
     }
@@ -585,9 +591,9 @@ window.renderCart = function() {
     var html = ''; var subtotal = 0;
     state.cart.forEach(item => {
         subtotal += (item.price * item.qty);
-        html += '<div class="cart-card"><img src="' + item.image + '" style="width:60px; height:60px; object-fit:cover; border-radius:10px;"><div class="ms-3 flex-grow-1"><div class="fw-bold">' + item.name + '</div><div class="text-primary-custom fw-bold">' + formatRp(item.price) + '</div></div><div class="d-flex align-items-center bg-light rounded-pill p-1"><button class="btn btn-sm btn-link text-dark text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', -1)"><i class="bi bi-dash-circle"></i></button><span class="fw-bold px-2">' + item.qty + '</span><button class="btn btn-sm btn-link text-primary-custom text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', 1)"><i class="bi bi-plus-circle-fill"></i></button></div></div>';
+        html += '<div class="cart-card"><img src="' + item.image + '" style="width:60px; height:60px; object-fit:cover; border-radius:10px;"><div class="ms-3 flex-grow-1"><div class="fw-bold">' + item.name + '</div><div class="text-primary-custom fw-bold">' + window.formatRp(item.price) + '</div></div><div class="d-flex align-items-center bg-light rounded-pill p-1"><button class="btn btn-sm btn-link text-dark text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', -1)"><i class="bi bi-dash-circle"></i></button><span class="fw-bold px-2">' + item.qty + '</span><button class="btn btn-sm btn-link text-primary-custom text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', 1)"><i class="bi bi-plus-circle-fill"></i></button></div></div>';
     });
-    document.getElementById('cart-items-container').innerHTML = html; document.getElementById('cart-total').innerText = formatRp(subtotal);
+    document.getElementById('cart-items-container').innerHTML = html; document.getElementById('cart-total').innerText = window.formatRp(subtotal);
 };
 
 // ================= CHECKOUT & PEMBAYARAN =================
@@ -624,7 +630,7 @@ window.processCheckout = function() {
     if(!oData.name || !oData.phone || (oData.type === 'Delivery' && !oData.address)) { if(typeof Swal!=='undefined') Swal.fire('Oops!','Mohon lengkapi formulir.','warning'); return; }
 
     document.getElementById('loader').style.display = 'flex';
-    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
+    if (APP_MODE === 'DEMO' || !GAS_API_URL || GAS_API_URL.trim() === "") {
         setTimeout(function() {
             var simID = "ORD-SIM-" + Math.floor(Math.random() * 10000);
             db.orders.push({ OrderID: simID, Date: new Date(), CustomerName: oData.name, CustomerPhone: oData.phone, OrderType: oData.type, TotalAmount: oData.total, PaymentMethod: oData.payment, Status: 'Baru', ItemsJSON: JSON.stringify(oData.cart) });
@@ -657,7 +663,7 @@ window.finishCheckout = function(orderID, data) {
 var adminPollingInterval = null; var lastKnownOrderCount = 0;
 window.startAdminPolling = function() {
     adminPollingInterval = setInterval(function() {
-        if (!GAS_API_URL || GAS_API_URL.trim() === "") {
+        if (APP_MODE === 'DEMO' || !GAS_API_URL || GAS_API_URL.trim() === "") {
             if(Math.random() > 0.8) {
                 var simID = "ORD-SIM-" + Math.floor(Math.random() * 10000);
                 db.orders.push({ OrderID: simID, Date: new Date(), CustomerName: 'Pelanggan Online', CustomerPhone: '0812', OrderType: 'TakeAway', TotalAmount: 25000, PaymentMethod: 'QRIS', Status: 'Baru', ItemsJSON: '[{"name":"Bakmi Goreng Spesial","qty":1,"price":25000}]' });
@@ -868,11 +874,10 @@ window.navigate = function(view) {
 window.toggleRole = function() {
     if(state.role === 'guest') {
         state.role = 'admin'; document.getElementById('role-text').innerText = 'Keluar Admin';
-        var adminPollInterval = setInterval(function() { /* Polling Dummy */ }, 10000);
-        window.navigate('admin');
+        window.startAdminPolling(); window.navigate('admin');
     } else {
         state.role = 'guest'; document.getElementById('role-text').innerText = 'Admin';
-        window.navigate('home');
+        window.stopAdminPolling(); window.navigate('home');
     }
 };
 
@@ -880,16 +885,23 @@ window.toggleRole = function() {
 function initApp() {
     window.setupPWA(); 
     
-    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
-        // Langsung tampilkan mode Simulasi (Tanpa Delay Loading)
+    // ATURAN MODE DEMO TERKUAT (Melewati segalanya)
+    if (APP_MODE === 'DEMO') {
         document.getElementById('loader').style.display = 'none';
-        db = JSON.parse(JSON.stringify(APP_MODE === 'DEMO' ? mockDB : blankDB));
+        db = JSON.parse(JSON.stringify(mockDB));
         lastKnownOrderCount = db.orders.length;
         window.processInitData(); 
         window.renderCategories(); 
         window.navigate('home');
+        return;
+    }
+
+    // ATURAN MODE CLIENT
+    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
+        document.getElementById('loader').style.display = 'none';
+        db = JSON.parse(JSON.stringify(blankDB));
+        window.processInitData(); window.renderCategories(); window.navigate('home');
     } else {
-        // Mode Fetch dari Server Gas
         document.getElementById('loader').style.display = 'flex';
         fetch(GAS_API_URL + "?action=getData").then(res => {
             if(!res.ok) throw new Error("Gagal");
@@ -900,11 +912,10 @@ function initApp() {
             window.processInitData(); window.renderCategories(); window.navigate('home');
             document.getElementById('loader').style.display = 'none';
         }).catch(err => {
-            // Fallback
             document.getElementById('loader').style.display = 'none';
-            db = JSON.parse(JSON.stringify(APP_MODE === 'DEMO' ? mockDB : blankDB));
+            db = JSON.parse(JSON.stringify(blankDB));
             window.processInitData(); window.renderCategories(); window.navigate('home');
-            if(typeof Swal!=='undefined') Swal.fire('Mode Simulasi', 'Gagal memuat API, memuat data dummy.', 'info');
+            if(typeof Swal!=='undefined') Swal.fire('Error API', 'Gagal memuat dari server.', 'error');
         });
     }
 }
