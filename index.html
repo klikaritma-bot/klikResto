@@ -269,6 +269,11 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- FITUR BARU: Tombol Ganti PIN -->
+                <button class="btn btn-outline-secondary w-100 fw-bold rounded-pill" onclick="window.changeAdminPIN()">
+                    <i class="bi bi-key"></i> Ganti PIN Admin
+                </button>
             </div>
 
             <!-- TAB: Orders -->
@@ -406,7 +411,8 @@ var mockDB = {
         { Key: 'WhatsAppNumber', Value: '6281234567890' },
         { Key: 'Address', Value: 'Marison Regency 3 Blok L23 Solo' },
         { Key: 'Rekening', Value: 'BCA 0123456789 a.n. klikResto' },
-        { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' }
+        { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' },
+        { Key: 'AdminPIN', Value: '123456' } // FITUR BARU: PIN Admin disimpan di Database
     ],
     categories: [
         { ID: 'C1', Name: 'Makanan Utama', Icon: 'bi-egg-fried' },
@@ -844,7 +850,7 @@ window.navigate = function(view) {
     if(view === 'checkout') { window.toggleAddress(); window.togglePaymentInfo(); window.toggleTiming(); }
 };
 
-// -- FITUR BARU: Keamanan Login Admin --
+// -- FITUR BARU: Keamanan Login Admin (Dinamis dari Database) --
 window.toggleRole = function() {
     if(state.role === 'guest') {
         Swal.fire({
@@ -858,7 +864,11 @@ window.toggleRole = function() {
             confirmButtonColor: '#12295d'
         }).then((result) => {
             if(result.isConfirmed) {
-                if(result.value === '123456') { // PIN Default
+                // Ambil PIN dari database settings (default 123456 jika klien belum setting)
+                var pinSetting = (db.settings || []).find(s => s.Key === 'AdminPIN');
+                var validPin = pinSetting ? pinSetting.Value : '123456';
+                
+                if(result.value === validPin) { 
                     state.role = 'admin'; 
                     document.getElementById('role-text').innerText = 'Keluar Admin';
                     window.startAdminPolling(); 
@@ -873,6 +883,37 @@ window.toggleRole = function() {
         state.role = 'guest'; document.getElementById('role-text').innerText = 'Admin';
         window.stopAdminPolling(); window.navigate('home');
     }
+};
+
+// -- FITUR BARU: Menu Klien untuk Mengubah PIN --
+window.changeAdminPIN = function() {
+    Swal.fire({
+        title: 'Ganti PIN Admin',
+        text: 'Masukkan PIN baru Anda:',
+        input: 'password',
+        inputPlaceholder: 'Ketik PIN Baru',
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#12295d'
+    }).then((result) => {
+        if(result.isConfirmed && result.value) {
+            var newPin = result.value;
+            
+            // 1. Update PIN di memory aplikasi secara langsung
+            var pinSetting = db.settings.find(s => s.Key === 'AdminPIN');
+            if (pinSetting) {
+                pinSetting.Value = newPin;
+            } else {
+                db.settings.push({ Key: 'AdminPIN', Value: newPin });
+            }
+            
+            // 2. Nantinya blok ini untuk mengirim perintah simpan PIN ke Google Apps Script (Backend)
+            // if (GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSetting', payload: { Key: 'AdminPIN', Value: newPin } }) }); }
+            
+            Swal.fire('Berhasil!', 'PIN Admin Anda berhasil diubah. Harap ingat PIN baru ini.', 'success');
+        }
+    });
 };
 
 function initApp() {
