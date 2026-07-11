@@ -68,7 +68,7 @@
         /* Item Keranjang Biasa (List Horizontal) */
         .cart-card { background: white; border-radius: 16px; margin-bottom: 10px; display: flex; padding: 10px; border: 1px solid #f1f1f1; box-shadow: 0 2px 8px rgba(0,0,0,0.02); align-items: center;}
         
-        /* ================= BOTTOM NAV (3 MENU & WA TENGAH) ================= */
+        /* ================= BOTTOM NAV ================= */
         .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 8px 0 12px 0; z-index: 1000; border-top-left-radius: 20px; border-top-right-radius: 20px; align-items: flex-end;}
         .nav-item { text-align: center; color: #a0a0a0; cursor: pointer; flex-grow: 1; position: relative; width: 33.33%;}
         .nav-item.active { color: var(--primary); }
@@ -105,19 +105,17 @@
             .print-item-name { width: 60%; } .print-item-qty { width: 10%; text-align: right; } .print-item-price { width: 30%; text-align: right; }
         }
 
-        /* Styling Modal Admin Form (Master Menu) */
+        /* Modal Admin Form */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center;}
         .modal-box { background: white; width: 90%; max-width: 450px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto;}
     </style>
 </head>
 <body>
 
-<!-- Area Cetak Struk Kasir (Tersembunyi) -->
 <div id="print-area"></div>
 
 <div class="app-container">
     
-    <!-- Layar Loading -->
     <div id="loader">
         <div class="spinner"></div>
         <p class="mt-3 fw-bold text-primary-custom" id="loader-text">Memuat Aplikasi...</p>
@@ -136,22 +134,12 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- MAIN CONTENT AREAS -->
-    <!-- ============================================== -->
     <div class="p-3">
 
-        <!-- ================= VIEW: HOME / KATALOG ================= -->
+        <!-- ================= VIEW: HOME ================= -->
         <div id="view-home" class="view-section active">
-            
-            <div id="home-banner-container">
-                <!-- Di-inject via JS sesuai dengan Setting (Demo / Client) -->
-            </div>
-
-            <!-- Kategori -->
+            <div id="home-banner-container"></div>
             <div class="category-scroll mb-3 mt-2" id="category-container"></div>
-
-            <!-- List Menu Header -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold mb-0" id="menu-section-title">Semua Menu</h6>
                 <div class="input-group input-group-sm w-50">
@@ -159,16 +147,13 @@
                     <input type="text" class="form-control border-start-0 rounded-end-pill" id="search-menu" placeholder="Cari..." onkeyup="window.filterMenu()">
                 </div>
             </div>
-            
-            <!-- GRID MENU (2 Kolom) -->
             <div id="menu-container" class="menu-grid mb-4"></div>
             
-            <!-- Area CTA klikResto (Ditampilkan HANYA jika APP_MODE = 'DEMO') -->
             <div id="cta-klikresto-banner" class="text-center p-4 rounded-4 shadow-sm" style="background:#f4f6f8; border: 1px dashed var(--primary); display:none; margin-bottom: 20px;">
                 <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" width="40" class="mb-2">
                 <h6 class="fw-bold text-primary-custom mb-1">Ingin punya WebApp seperti ini?</h6>
                 <p class="small text-muted mb-3">Aplikasi kasir & pemesanan online tanpa potongan komisi, khusus untuk warung & restoran Anda.</p>
-                <a href="https://www.kliksistem.com/resto" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
+                <a href="https://kliksistem.com/resto" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
             </div>
         </div>
 
@@ -176,7 +161,6 @@
         <div id="view-cart" class="view-section">
             <h5 class="fw-bold mb-3"><i class="bi bi-cart3"></i> Pesanan Saya</h5>
             <div id="cart-items-container" class="mb-4"></div>
-
             <div class="admin-card" id="cart-summary" style="display: none;">
                 <h6 class="fw-bold mb-3">Ringkasan Pesanan</h6>
                 <div class="d-flex justify-content-between mb-3 border-top pt-2">
@@ -186,7 +170,6 @@
                     Lanjut Checkout <i class="bi bi-arrow-right"></i>
                 </button>
             </div>
-            
             <div id="empty-cart-msg" class="text-center py-5 text-muted">
                 <i class="bi bi-basket2" style="font-size: 3rem;"></i>
                 <p class="mt-2">Pesanan masih kosong.</p>
@@ -199,6 +182,27 @@
             <h5 class="fw-bold mb-3"><i class="bi bi-clipboard-check"></i> Detail Pesanan</h5>
             <div class="admin-card">
                 <form id="checkout-form">
+                    
+                    <!-- FITUR BARU: Waktu Pengiriman / Pre-Order -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Waktu Pesanan</label>
+                        <select class="form-select rounded-pill" id="order-timing" onchange="window.toggleTiming()">
+                            <option value="Sekarang">Secepatnya (Sekarang)</option>
+                            <option value="PreOrder">Pre-Order (Pilih Tanggal & Jam)</option>
+                        </select>
+                    </div>
+                    <!-- Pilihan Tanggal & Jam (Hidden by default) -->
+                    <div class="mb-3 row g-2" id="timing-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px dashed #ccc;">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Tanggal</label>
+                            <input type="date" class="form-control rounded-pill" id="order-date">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Jam Pengambilan</label>
+                            <input type="time" class="form-control rounded-pill" id="order-time">
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label small text-muted">Tipe Pesanan</label>
                         <select class="form-select rounded-pill" id="order-type" onchange="window.toggleAddress()">
@@ -242,7 +246,6 @@
                 <span class="badge bg-success" id="admin-polling-status" style="font-size: 0.6rem;"><i class="bi bi-broadcast"></i> Sync ON</span>
             </div>
 
-            <!-- Sub-Navigasi Admin -->
             <div class="admin-tab-scroll mb-3">
                 <div class="admin-tab active" onclick="window.switchAdminTab('dashboard')" id="tab-dashboard">Dashboard</div>
                 <div class="admin-tab" onclick="window.switchAdminTab('orders')" id="tab-orders">Daftar Order</div>
@@ -273,9 +276,9 @@
                 <div id="admin-orders-container"></div>
             </div>
 
-            <!-- TAB: POS Kasir Penjualan Langsung -->
+            <!-- TAB: POS Kasir -->
             <div id="admin-sec-pos" class="admin-section-div">
-                <div class="alert alert-success p-2 small border-0"><i class="bi bi-shop"></i> Gunakan panel ini untuk memasukkan pesanan pelanggan yang datang ke toko (Dine-In/Takeaway langsung).</div>
+                <div class="alert alert-success p-2 small border-0"><i class="bi bi-shop"></i> Gunakan panel ini untuk memasukkan pesanan pelanggan yang datang ke toko.</div>
                 
                 <div class="row g-2">
                     <!-- Katalog POS (Kiri) -->
@@ -286,6 +289,13 @@
                     <!-- Struk Kasir POS (Kanan) -->
                     <div class="col-5" style="height: 60vh; background:#fff; border-radius:10px; border:1px solid #ddd; display:flex; flex-direction:column;">
                         <h6 class="fw-bold p-2 mb-0 border-bottom bg-light" style="font-size:0.8rem; border-radius: 10px 10px 0 0;">Tagihan Kasir</h6>
+                        
+                        <!-- FITUR BARU: Input Nama & Meja Pelanggan -->
+                        <div class="p-2 border-bottom bg-light">
+                            <input type="text" class="form-control form-control-sm mb-1" id="pos-cust-name" placeholder="Nama Pelanggan (Cth: Budi)">
+                            <input type="text" class="form-control form-control-sm" id="pos-table-no" placeholder="No. Meja (Cth: Meja 4)">
+                        </div>
+
                         <div id="pos-cart-list" style="flex-grow:1; overflow-y:auto; padding:5px; font-size:0.75rem;"></div>
                         <div class="p-2 border-top bg-light" style="border-radius: 0 0 10px 10px;">
                             <div class="d-flex justify-content-between fw-bold mb-2 text-danger" style="font-size:0.85rem"><span>Total</span><span id="pos-total-price">Rp 0</span></div>
@@ -307,28 +317,23 @@
 
     </div>
 
-    <!-- Floating Cart Customer -->
+    <!-- Floating Cart -->
     <div id="floating-cart" class="floating-cart-btn" style="display: none;" onclick="window.navigate('cart')">
         <div><i class="bi bi-bag-fill me-2"></i><span id="float-qty" class="fw-bold">0</span> Item</div>
         <div class="fw-bold" id="float-total">Rp 0</div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- BOTTOM NAVIGATION (HANYA 3 MENU & WA TENGAH) -->
-    <!-- ============================================== -->
+    <!-- Bottom Nav -->
     <div class="bottom-nav" id="main-bottom-nav">
         <div class="nav-item active" onclick="window.navigate('home')" id="nav-home">
             <i class="bi bi-house-door-fill"></i><span>Beranda</span>
         </div>
-        
-        <!-- Slot Tengah untuk WA -->
         <div class="nav-item" style="position: relative;">
             <a href="#" id="wa-float-link" target="_blank" class="wa-float-btn">
                 <i class="bi bi-whatsapp"></i>
             </a>
             <span style="display:block; margin-top: 30px; opacity:0">WA</span>
         </div>
-
         <div class="nav-item" onclick="window.navigate('cart')" id="nav-cart">
             <i class="bi bi-receipt"></i><span>Pesanan</span>
             <span class="cart-badge" id="nav-cart-badge" style="display: none;">0</span>
@@ -337,9 +342,7 @@
 
 </div>
 
-<!-- ============================================== -->
-<!-- MODAL FORM TAMBAH/EDIT MENU (ADMIN) -->
-<!-- ============================================== -->
+<!-- Modal Form Menu -->
 <div class="modal-overlay" id="menu-modal">
     <div class="modal-box">
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
@@ -366,20 +369,10 @@
                 <label class="small text-muted">Deskripsi Singkat</label>
                 <textarea id="menu-desc" class="form-control form-control-sm" rows="2"></textarea>
             </div>
-            
-            <!-- PANDUAN UPLOAD IMGBB SESUAI REQUEST -->
             <div class="mb-2">
                 <label class="small fw-bold text-dark">Link Gambar (URL)</label>
-                <input type="url" id="menu-img" class="form-control form-control-sm" placeholder="https://i.ibb.co/..." required>
-                <div class="text-muted" style="font-size:0.65rem; margin-top:5px; background:#f8f9fa; padding:8px; border-radius:8px; border: 1px dashed #ccc;">
-                    <i class="bi bi-info-circle-fill text-primary"></i> <b>Cara Upload Foto Gratis:</b><br>
-                    1. Buka web <a href="https://id.imgbb.com/" target="_blank" class="fw-bold text-primary text-decoration-none">id.imgbb.com</a><br>
-                    2. Upload foto menu dari HP Anda.<br>
-                    3. Salin (Copy) <b>Link HTML Khusus / Direct Link</b>.<br>
-                    4. Tempel (Paste) link tersebut ke kotak di atas.
-                </div>
+                <input type="url" id="menu-img" class="form-control form-control-sm" required>
             </div>
-            
             <div class="row g-2 mb-4">
                 <div class="col-6">
                     <label class="small text-muted">Kategori</label>
@@ -401,22 +394,12 @@
     </div>
 </div>
 
-<!-- Audio Notifikasi Kasir -->
 <audio id="order-sound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
 
-<!-- ============================================== -->
-<!-- SCRIPT UTAMA PENGENDALI APLIKASI -->
-<!-- ============================================== -->
 <script>
-// 🚀 PENGATURAN MODE APLIKASI
-// "DEMO" = Mengabaikan GAS URL, memuat data dummy lokal instan, memunculkan iklan CTA klikResto.
-// "CLIENT" = Wajib mengisi GAS_API_URL untuk memuat data asli, layar bersih dari iklan CTA.
 const APP_MODE = "DEMO"; 
+const GAS_API_URL = ""; 
 
-// 🚀 KONFIGURASI API (GOOGLE APPS SCRIPT URL)
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
-
-// ================= DATA =================
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
@@ -442,12 +425,9 @@ var mockDB = {
 };
 
 var blankDB = { settings: [], categories: [], menus: [], orders: [] };
-
-// Variabel Global Data
 var db = { settings: [], categories: [], menus: [], orders: [] };
 var state = { cart: [], posCart: [], currentView: 'home', role: 'guest', activeCategory: 'All', adminTab: 'dashboard' };
 
-// ================= DEKLARASI FUNGSI GLOBAL =================
 window.setupPWA = function() {
     var manifest = {
         "name": (APP_MODE === 'DEMO' ? "klikResto App" : "Resto App"),
@@ -479,18 +459,11 @@ window.processInitData = function() {
     document.getElementById('resto-address').innerText = restoAddress;
     document.getElementById('wa-float-link').href = 'https://wa.me/' + wa;
     
-    // Tampilan Home disesuaikan berdasarkan Mode (DEMO vs CLIENT)
     if(APP_MODE === 'DEMO') {
-        document.getElementById('home-banner-container').innerHTML = `
-            <div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);">
-                <h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Kini hadir melayani pemesanan online langsung ke WA Anda!</p>
-            </div>`;
+        document.getElementById('home-banner-container').innerHTML = `<div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);"><h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Kini hadir melayani pemesanan online langsung ke WA Anda!</p></div>`;
         document.getElementById('cta-klikresto-banner').style.display = 'block';
     } else {
-        document.getElementById('home-banner-container').innerHTML = `
-            <div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);">
-                <h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Selamat datang di layanan pesan antar kami.</p>
-            </div>`;
+        document.getElementById('home-banner-container').innerHTML = `<div class="rounded-card text-white p-4 mb-4" style="background: var(--primary);"><h4 class="fw-bold">${restoName}</h4><p class="mb-0 small">Selamat datang di layanan pesan antar kami.</p></div>`;
         document.getElementById('cta-klikresto-banner').style.display = 'none';
     }
 };
@@ -538,31 +511,20 @@ window.renderHome = function() {
         });
     }
     document.getElementById('menu-container').innerHTML = html;
-    
-    var catTitle = 'Semua Menu';
-    if(state.activeCategory !== 'All') { var c = (db.categories||[]).find(x => x.ID === state.activeCategory); if(c) catTitle = c.Name; }
-    document.getElementById('menu-section-title').innerText = catTitle;
 };
 
 window.filterCategory = function(catId) { state.activeCategory = catId; window.renderCategories(); window.renderHome(); };
 window.filterMenu = function() { window.renderHome(); };
 
-// ================= LOGIKA KERANJANG =================
 window.addToCart = function(menuId) {
     var menu = (db.menus || []).find(m => m.ID === menuId);
-    if(!menu || menu.Label === 'Kosong') {
-        if(typeof Swal !== 'undefined') Swal.fire('Maaf', 'Menu ini sedang kosong/habis.', 'error');
-        return;
-    }
+    if(!menu || menu.Label === 'Kosong') { if(typeof Swal !== 'undefined') Swal.fire('Maaf', 'Menu ini sedang kosong/habis.', 'error'); return; }
     var exist = state.cart.find(i => i.id === menuId);
     var price = (menu.PromoPrice && menu.PromoPrice > 0) ? menu.PromoPrice : menu.Price;
     
-    if (exist) exist.qty += 1;
-    else state.cart.push({ id: menu.ID, name: menu.Name, price: price, qty: 1, image: menu.Image });
-    
+    if (exist) exist.qty += 1; else state.cart.push({ id: menu.ID, name: menu.Name, price: price, qty: 1, image: menu.Image });
     if(typeof Swal !== 'undefined') Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Ditambahkan', showConfirmButton: false, timer: 1000});
-    window.updateCartBadge();
-    if(state.currentView === 'home') document.getElementById('floating-cart').style.display = 'flex';
+    window.updateCartBadge(); if(state.currentView === 'home') document.getElementById('floating-cart').style.display = 'flex';
 };
 
 window.changeQty = function(id, change) {
@@ -596,7 +558,12 @@ window.renderCart = function() {
     document.getElementById('cart-items-container').innerHTML = html; document.getElementById('cart-total').innerText = window.formatRp(subtotal);
 };
 
-// ================= CHECKOUT & PEMBAYARAN =================
+// -- FITUR BARU: Toggle Waktu Pesanan --
+window.toggleTiming = function() {
+    var timing = document.getElementById('order-timing').value;
+    document.getElementById('timing-group').style.display = timing === 'PreOrder' ? 'flex' : 'none';
+};
+
 window.toggleAddress = function() {
     var isDelivery = document.getElementById('order-type').value === 'Delivery';
     document.getElementById('address-group').style.display = isDelivery ? 'block' : 'none';
@@ -607,7 +574,6 @@ window.togglePaymentInfo = function() {
     var method = document.getElementById('payment-method').value;
     var infoBox = document.getElementById('payment-info-box');
     var html = '';
-
     if (method === 'Transfer') {
         var rekSetting = (db.settings || []).find(s => s.Key === 'Rekening');
         html = '<div class="small text-muted mb-1">Silakan transfer ke rekening:</div><div class="fw-bold fs-6 text-primary-custom mb-2">' + (rekSetting ? rekSetting.Value : 'BCA 01234') + '</div><div class="small text-danger" style="font-size: 0.75rem;">*Mohon simpan bukti transfer untuk dikirim ke WA.</div>';
@@ -621,13 +587,24 @@ window.togglePaymentInfo = function() {
 };
 
 window.processCheckout = function() {
+    var timingMode = document.getElementById('order-timing').value;
+    var reqDate = document.getElementById('order-date').value;
+    var reqTime = document.getElementById('order-time').value;
+    
+    var timeString = "Secepatnya";
+    if (timingMode === 'PreOrder') {
+        if (!reqDate || !reqTime) { Swal.fire('Oops!','Mohon pilih Tanggal dan Jam Pre-Order.','warning'); return; }
+        timeString = reqDate + " | Jam: " + reqTime;
+    }
+
     var oData = {
         name: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value,
         type: document.getElementById('order-type').value, address: document.getElementById('cust-address').value,
-        payment: document.getElementById('payment-method').value, total: state.cart.reduce((s, i) => s + (i.price * i.qty), 0), cart: state.cart
+        payment: document.getElementById('payment-method').value, timing: timeString,
+        total: state.cart.reduce((s, i) => s + (i.price * i.qty), 0), cart: state.cart
     };
 
-    if(!oData.name || !oData.phone || (oData.type === 'Delivery' && !oData.address)) { if(typeof Swal!=='undefined') Swal.fire('Oops!','Mohon lengkapi formulir.','warning'); return; }
+    if(!oData.name || !oData.phone || (oData.type === 'Delivery' && !oData.address)) { Swal.fire('Oops!','Mohon lengkapi formulir.','warning'); return; }
 
     document.getElementById('loader').style.display = 'flex';
     if (APP_MODE === 'DEMO' || !GAS_API_URL || GAS_API_URL.trim() === "") {
@@ -648,18 +625,17 @@ window.processCheckout = function() {
 window.finishCheckout = function(orderID, data) {
     document.getElementById('loader').style.display = 'none'; state.cart = []; window.updateCartBadge();
     var sWA = (db.settings||[]).find(s => s.Key === 'WhatsAppNumber'); var restoWA = sWA ? sWA.Value : '6281234567890';
-    var waText = `*ORDER BARU*\nID: ${orderID}\nNama: ${data.name}\nTipe: ${data.type}\n`;
+    
+    var waText = `*ORDER BARU*\nID: ${orderID}\nNama: ${data.name}\nTipe: ${data.type}\nWaktu: ${data.timing}\n`;
     if(data.type === 'Delivery') waText += `Alamat: ${data.address}\n`;
     waText += `Bayar: ${data.payment}\n\n*Item:*\n`;
     data.cart.forEach(i => { waText += `- ${i.qty}x ${i.name} (${window.formatRp(i.price * i.qty)})\n`; });
     waText += `\n*TOTAL: ${window.formatRp(data.total)}*\n`;
     if(data.payment === 'Transfer' || data.payment === 'QRIS') waText += "_(Sertakan foto bukti pembayaran disini)_";
 
-    if(typeof Swal!=='undefined') Swal.fire({ title: 'Berhasil!', text: 'Lanjut ke WhatsApp...', icon: 'success' }).then(() => { window.open('https://wa.me/'+restoWA+'?text='+encodeURIComponent(waText), '_blank'); window.navigate('home'); });
-    else { window.open('https://wa.me/'+restoWA+'?text='+encodeURIComponent(waText), '_blank'); window.navigate('home'); }
+    Swal.fire({ title: 'Berhasil!', text: 'Lanjut ke WhatsApp...', icon: 'success' }).then(() => { window.open('https://wa.me/'+restoWA+'?text='+encodeURIComponent(waText), '_blank'); window.navigate('home'); });
 };
 
-// ================= ADMIN REALTIME POLLING =================
 var adminPollingInterval = null; var lastKnownOrderCount = 0;
 window.startAdminPolling = function() {
     adminPollingInterval = setInterval(function() {
@@ -669,10 +645,6 @@ window.startAdminPolling = function() {
                 db.orders.push({ OrderID: simID, Date: new Date(), CustomerName: 'Pelanggan Online', CustomerPhone: '0812', OrderType: 'TakeAway', TotalAmount: 25000, PaymentMethod: 'QRIS', Status: 'Baru', ItemsJSON: '[{"name":"Bakmi Goreng Spesial","qty":1,"price":25000}]' });
                 window.handleNewOrderReceived();
             }
-        } else {
-            fetch(GAS_API_URL + "?action=getData").then(res => res.json()).then(parsed => {
-                if(parsed.orders && parsed.orders.length > lastKnownOrderCount) { db.orders = parsed.orders; window.handleNewOrderReceived(); }
-            }).catch(e => console.log('Polling error', e));
         }
     }, 10000);
 };
@@ -685,7 +657,6 @@ window.handleNewOrderReceived = function() {
 
 window.stopAdminPolling = function() { if(adminPollingInterval) clearInterval(adminPollingInterval); };
 
-// ================= ADMIN LOGIC (DASHBOARD, ORDERS) =================
 window.renderAdminDashboard = function() {
     var totalRev = 0; var activeOrd = 0;
     (db.orders || []).forEach(o => { if(o.Status !== 'Dibatalkan') totalRev += (o.TotalAmount || 0); if(o.Status !== 'Selesai' && o.Status !== 'Dibatalkan') activeOrd++; });
@@ -713,28 +684,27 @@ window.renderAdminOrders = function() {
 
 window.changeOrderStatus = function(orderId, newStatus) {
     var order = db.orders.find(o => o.OrderID === orderId); if(order) order.Status = newStatus;
-    if(typeof Swal!=='undefined') Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Status diperbarui', showConfirmButton: false, timer: 1000});
+    Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Status diperbarui', showConfirmButton: false, timer: 1000});
     window.renderAdminOrders(); window.renderAdminDashboard();
 };
 
 window.showOrderDetail = function(orderId) {
     var o = db.orders.find(x => x.OrderID === orderId); if(!o) return;
     var itms = ''; try { JSON.parse(o.ItemsJSON).forEach(i => itms+=`<div>${i.qty}x ${i.name} - ${window.formatRp(i.price*i.qty)}</div>`); } catch(e){}
-    var h = `<div class="text-start small"><b>Tipe:</b> ${o.OrderType}<br><b>Nama:</b> ${o.CustomerName}<br><b>Alamat:</b> ${o.Address||'-'}<br><b>Bayar:</b> ${o.PaymentMethod}<hr>${itms}<hr><b>Total: ${window.formatRp(o.TotalAmount)}</b></div>`;
-    if(typeof Swal!=='undefined') Swal.fire({title: o.OrderID, html: h, confirmButtonColor: '#12295d'});
+    var h = `<div class="text-start small"><b>Tipe:</b> ${o.OrderType}<br><b>Nama:</b> ${o.CustomerName}<br><b>Alamat/Meja:</b> ${o.Address||'-'}<br><b>Bayar:</b> ${o.PaymentMethod}<hr>${itms}<hr><b>Total: ${window.formatRp(o.TotalAmount)}</b></div>`;
+    Swal.fire({title: o.OrderID, html: h, confirmButtonColor: '#12295d'});
 };
 
 window.printStruk = function(orderId) {
     var order = db.orders.find(o => o.OrderID === orderId); if(!order) return;
     var html = `<div class="print-header"><h3>${document.getElementById('resto-name').innerText}</h3><div style="font-weight:normal; font-size:11px;">Struk Pembelian</div></div><div class="print-divider"></div>`;
-    html += `<div style="font-size:11px; margin-bottom:5px;"><div>ID Order : ${order.OrderID}</div><div>Tipe     : ${order.OrderType}</div><div>Nama     : ${order.CustomerName}</div><div>Bayar    : ${order.PaymentMethod}</div></div><div class="print-divider"></div>`;
+    html += `<div style="font-size:11px; margin-bottom:5px;"><div>ID Order : ${order.OrderID}</div><div>Tipe     : ${order.OrderType}</div><div>Nama     : ${order.CustomerName}</div><div>Keterangan: ${order.Address || '-'}</div><div>Bayar    : ${order.PaymentMethod}</div></div><div class="print-divider"></div>`;
     try { JSON.parse(order.ItemsJSON).forEach(itm => { html += `<div class="print-flex"><div class="print-item-name">${itm.name}</div><div class="print-item-qty">${itm.qty}x</div><div class="print-item-price">${window.formatRp(itm.price * itm.qty)}</div></div>`; }); } catch(e){}
     html += `<div class="print-divider"></div><div class="print-flex" style="font-weight:bold;"><div>TOTAL</div><div>${window.formatRp(order.TotalAmount)}</div></div><div class="print-divider"></div>`;
     html += `<div class="print-header" style="margin-top:15px; font-weight:normal;">Matur Nuwun!</div>`;
     document.getElementById('print-area').innerHTML = html; window.print();
 };
 
-// -- FUNGSI ADMIN KELOLA MENU --
 window.renderAdminMenu = function() {
     var html = ''; document.getElementById('menu-cat').innerHTML = '';
     (db.categories||[]).forEach(c => { document.getElementById('menu-cat').innerHTML += `<option value="${c.ID}">${c.Name}</option>`; });
@@ -766,7 +736,6 @@ window.openMenuForm = function(id) {
         }
     } else { document.getElementById('modal-menu-title').innerText = 'Tambah Menu Baru'; document.getElementById('menu-id').value = ''; }
 };
-
 window.closeMenuForm = function() { document.getElementById('menu-modal').style.display = 'none'; };
 
 window.saveAdminMenu = function() {
@@ -777,16 +746,12 @@ window.saveAdminMenu = function() {
         Description: document.getElementById('menu-desc').value, Image: document.getElementById('menu-img').value,
         CategoryID: document.getElementById('menu-cat').value, Label: document.getElementById('menu-label').value, Status: 'Aktif'
     };
-    
     if(!data.Name || !data.Price || !data.Image) { alert("Nama, Harga, dan Gambar wajib diisi!"); return; }
-    if(id) { var idx = db.menus.findIndex(m => m.ID === id); if(idx !== -1) db.menus[idx] = data; }
-    else { db.menus.unshift(data); }
-
+    if(id) { var idx = db.menus.findIndex(m => m.ID === id); if(idx !== -1) db.menus[idx] = data; } else { db.menus.unshift(data); }
     window.closeMenuForm(); window.renderAdminMenu(); window.renderHome();
-    if(typeof Swal!=='undefined') Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Tersimpan (Lokal)', showConfirmButton: false, timer: 1500});
+    Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 1500});
 };
 
-// -- FUNGSI ADMIN KASIR POS --
 window.renderAdminPOSMenu = function() {
     var search = document.getElementById('pos-search').value.toLowerCase();
     var filtered = (db.menus || []).filter(m => m.Name.toLowerCase().includes(search));
@@ -799,8 +764,7 @@ window.renderAdminPOSMenu = function() {
             <div style="font-size:0.65rem; color:var(--secondary);">${window.formatRp(p)}</div>
         </div>`;
     });
-    document.getElementById('pos-menu-grid').innerHTML = html;
-    window.renderPOSCart();
+    document.getElementById('pos-menu-grid').innerHTML = html; window.renderPOSCart();
 };
 
 window.addPOSItem = function(id) {
@@ -828,14 +792,24 @@ window.renderPOSCart = function() {
     document.getElementById('pos-total-price').innerText = window.formatRp(total);
 };
 
+// -- FITUR BARU: POS Checkout membaca Nama & Meja --
 window.processPOSCheckout = function() {
     if(state.posCart.length === 0) return;
+    
+    var custName = document.getElementById('pos-cust-name').value || 'Pelanggan Kasir';
+    var tableNo = document.getElementById('pos-table-no').value || 'Kasir / Bawa Pulang';
     var total = state.posCart.reduce((s, i) => s + (i.price * i.qty), 0);
     var simID = "POS-" + Math.floor(Math.random() * 10000);
-    var orderData = { OrderID: simID, Date: new Date(), CustomerName: 'Pelanggan Kasir', CustomerPhone: '-', OrderType: 'DineIn', Address: '-', TotalAmount: total, PaymentMethod: 'Tunai', Status: 'Selesai', ItemsJSON: JSON.stringify(state.posCart) };
+    
+    var orderData = { OrderID: simID, Date: new Date(), CustomerName: custName, CustomerPhone: '-', OrderType: 'DineIn', Address: tableNo, TotalAmount: total, PaymentMethod: 'Tunai', Status: 'Selesai', ItemsJSON: JSON.stringify(state.posCart) };
     
     db.orders.push(orderData); state.posCart = []; window.renderPOSCart(); window.renderAdminDashboard();
-    if(typeof Swal!=='undefined') Swal.fire('Berhasil', 'Pesanan Kasir Disimpan', 'success');
+    
+    // Reset input nama dan meja setelah bayar
+    document.getElementById('pos-cust-name').value = '';
+    document.getElementById('pos-table-no').value = '';
+
+    Swal.fire('Berhasil', 'Pesanan Kasir Disimpan', 'success');
     setTimeout(() => { window.printStruk(simID); }, 500);
 };
 
@@ -851,7 +825,6 @@ window.switchAdminTab = function(tabId) {
     if(tabId === 'pos') window.renderAdminPOSMenu();
     if(tabId === 'menu') window.renderAdminMenu();
 };
-
 window.renderAdmin = function() { window.switchAdminTab(state.adminTab); };
 
 window.navigate = function(view) {
@@ -868,58 +841,49 @@ window.navigate = function(view) {
     if(view === 'home') window.renderHome();
     if(view === 'cart') window.renderCart();
     if(view === 'admin') window.renderAdmin();
-    if(view === 'checkout') { window.toggleAddress(); window.togglePaymentInfo(); }
+    if(view === 'checkout') { window.toggleAddress(); window.togglePaymentInfo(); window.toggleTiming(); }
 };
 
+// -- FITUR BARU: Keamanan Login Admin --
 window.toggleRole = function() {
     if(state.role === 'guest') {
-        state.role = 'admin'; document.getElementById('role-text').innerText = 'Keluar Admin';
-        window.startAdminPolling(); window.navigate('admin');
+        Swal.fire({
+            title: 'Akses Admin',
+            text: 'Masukkan PIN untuk mengakses panel',
+            input: 'password',
+            inputPlaceholder: 'PIN Admin',
+            showCancelButton: true,
+            confirmButtonText: 'Masuk',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#12295d'
+        }).then((result) => {
+            if(result.isConfirmed) {
+                if(result.value === '123456') { // PIN Default
+                    state.role = 'admin'; 
+                    document.getElementById('role-text').innerText = 'Keluar Admin';
+                    window.startAdminPolling(); 
+                    window.navigate('admin');
+                    Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Login Berhasil', showConfirmButton: false, timer: 1500});
+                } else {
+                    Swal.fire('Akses Ditolak', 'PIN yang Anda masukkan salah.', 'error');
+                }
+            }
+        });
     } else {
         state.role = 'guest'; document.getElementById('role-text').innerText = 'Admin';
         window.stopAdminPolling(); window.navigate('home');
     }
 };
 
-// ================= SYSTEM BOOT & INISIALISASI =================
 function initApp() {
     window.setupPWA(); 
-    
-    // ATURAN MODE DEMO TERKUAT (Melewati segalanya)
     if (APP_MODE === 'DEMO') {
         document.getElementById('loader').style.display = 'none';
         db = JSON.parse(JSON.stringify(mockDB));
         lastKnownOrderCount = db.orders.length;
-        window.processInitData(); 
-        window.renderCategories(); 
-        window.navigate('home');
-        return;
-    }
-
-    // ATURAN MODE CLIENT
-    if (!GAS_API_URL || GAS_API_URL.trim() === "") {
-        document.getElementById('loader').style.display = 'none';
-        db = JSON.parse(JSON.stringify(blankDB));
         window.processInitData(); window.renderCategories(); window.navigate('home');
-    } else {
-        document.getElementById('loader').style.display = 'flex';
-        fetch(GAS_API_URL + "?action=getData").then(res => {
-            if(!res.ok) throw new Error("Gagal");
-            return res.json();
-        }).then(parsed => {
-            if(parsed.error) throw new Error(parsed.error);
-            db = parsed; db.settings=db.settings||[]; db.categories=db.categories||[]; db.menus=db.menus||[]; db.orders=db.orders||[];
-            window.processInitData(); window.renderCategories(); window.navigate('home');
-            document.getElementById('loader').style.display = 'none';
-        }).catch(err => {
-            document.getElementById('loader').style.display = 'none';
-            db = JSON.parse(JSON.stringify(blankDB));
-            window.processInitData(); window.renderCategories(); window.navigate('home');
-            if(typeof Swal!=='undefined') Swal.fire('Error API', 'Gagal memuat dari server.', 'error');
-        });
     }
 }
-
 document.addEventListener("DOMContentLoaded", initApp);
 </script>
 </body>
