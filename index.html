@@ -405,6 +405,10 @@
 const APP_MODE = "DEMO"; 
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
 
+// FITUR BARU: Konfigurasi Vault (Hanya diedit saat Setup Klien Baru)
+const KLIENT_ID = "C-001"; // Ganti dengan ID unik tiap klien saat onboarding
+const VAULT_API_URL = "ISI_DENGAN_URL_WEBAPP_VAULT_ANDA_DI_SINI"; // Paste URL Web App Vault di sini
+
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
@@ -916,14 +920,51 @@ window.changeAdminPIN = function() {
     });
 };
 
+// -- FITUR BARU: Mengecek Status Langganan ke Vault --
+function checkSubscription() {
+    // Jika tidak ada URL Vault atau sedang mode DEMO murni, lewati pengecekan
+    if (!VAULT_API_URL || VAULT_API_URL === "ISI_DENGAN_URL_WEBAPP_VAULT_ANDA_DI_SINI" || APP_MODE === "DEMO") {
+        return Promise.resolve(true); 
+    }
+
+    return fetch(VAULT_API_URL + "?clientId=" + KLIENT_ID)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status && data.status.toUpperCase() === "SUSPEND") {
+                // Tampilkan Layar Suspend (menutupi seluruh aplikasi)
+                document.body.innerHTML = `
+                    <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8d7da; color:#721c24; text-align:center; padding:20px;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size:4rem; margin-bottom:20px;"></i>
+                        <h2 style="font-weight:bold;">AKSES DITANGGUHKAN</h2>
+                        <p>Masa berlangganan aplikasi untuk layanan ini telah berakhir atau ditangguhkan sementara.</p>
+                        <p style="font-size:0.9rem; margin-top:20px;">Silakan hubungi administrator (klikSistem) untuk mengaktifkan kembali layanan.</p>
+                    </div>`;
+                return false; // Berhenti di sini
+            }
+            return true; // Lanjut masuk aplikasi
+        })
+        .catch(error => {
+            console.error("Gagal terhubung ke Vault", error);
+            return true; // Jika server Vault down, lebih baik biarkan klien tetap bisa berjualan (fail-safe)
+        });
+}
+
 function initApp() {
     window.setupPWA(); 
-    if (APP_MODE === 'DEMO') {
-        document.getElementById('loader').style.display = 'none';
-        db = JSON.parse(JSON.stringify(mockDB));
-        lastKnownOrderCount = db.orders.length;
-        window.processInitData(); window.renderCategories(); window.navigate('home');
-    }
+    
+    // Cek Vault dulu sebelum memuat aplikasi
+    checkSubscription().then(isActive => {
+        if (!isActive) return; // Jika suspend, proses berhenti
+
+        if (APP_MODE === 'DEMO') {
+            document.getElementById('loader').style.display = 'none';
+            db = JSON.parse(JSON.stringify(mockDB));
+            lastKnownOrderCount = db.orders.length;
+            window.processInitData(); window.renderCategories(); window.navigate('home');
+        } else {
+             // Nanti ini untuk memanggil data asli dari GAS Klien
+        }
+    });
 }
 document.addEventListener("DOMContentLoaded", initApp);
 </script>
