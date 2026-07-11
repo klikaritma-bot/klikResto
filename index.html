@@ -405,33 +405,9 @@
 const APP_MODE = "DEMO"; 
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
 
-// FITUR BARU: Konfigurasi Vault terpusat ke DB MitraResto
-const SUB_ID = "SUB-001"; // Sesuaikan dengan sub_id yang Anda catat di Tab Subscriptions MitraResto!
-const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_YANG_BENAR"; 
-
-function checkSubscription() {
-    if (APP_MODE === "DEMO") return Promise.resolve(true);
-
-    return fetch(MITRA_API_URL + "?action=checkVault&sub_id=" + SUB_ID)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status && data.status.toUpperCase() === "SUSPENDED") {
-                document.body.innerHTML = `
-                    <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8d7da; color:#721c24; text-align:center; padding:20px;">
-                        <i class="bi bi-exclamation-triangle-fill" style="font-size:4rem; margin-bottom:20px;"></i>
-                        <h2 style="font-weight:bold;">AKSES DITANGGUHKAN</h2>
-                        <p>Masa berlangganan aplikasi untuk layanan ini telah berakhir atau ditangguhkan sementara.</p>
-                        <p style="font-size:0.9rem; margin-top:20px;">Silakan selesaikan tagihan Anda di panel MitraResto.</p>
-                    </div>`;
-                return false; 
-            }
-            return true; 
-        })
-        .catch(error => {
-            console.error("Gagal terhubung ke Vault", error);
-            return true; 
-        });
-
+// FITUR BARU: Konfigurasi Vault (Hanya diedit saat Setup Klien Baru)
+const KLIENT_ID = "C-001"; // Ganti dengan ID unik tiap klien saat onboarding
+const VAULT_API_URL = "ISI_DENGAN_URL_WEBAPP_VAULT_ANDA_DI_SINI"; // Paste URL Web App Vault di sini
 
 var mockDB = {
     settings: [
