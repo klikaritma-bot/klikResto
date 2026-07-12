@@ -402,10 +402,19 @@
 <audio id="order-sound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
 
 <script>
-const APP_MODE = "DEMO"; 
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; 
+// =======================================================
+// 1. KONFIGURASI UTAMA (UBAH SAAT ONBOARDING KLIEN)
+// =======================================================
+const APP_MODE = "DEMO"; // Ganti menjadi "CLIENT" jika untuk toko Klien
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; // Ganti dengan URL GAS Client
 
+// =======================================================
+// 2. KONFIGURASI VAULT (PENGUNCI OTOMATIS)
+// =======================================================
+const SUB_ID = "SUB-001"; // Samakan dengan sub_id di tab Subscriptions (DB MitraResto)
+const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI"; // URL WebApp MitraResto
 
+// Data Dummy untuk Mode Demo
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
@@ -413,7 +422,7 @@ var mockDB = {
         { Key: 'Address', Value: 'Marison Regency 3 Blok L23 Solo' },
         { Key: 'Rekening', Value: 'BCA 0123456789 a.n. klikResto' },
         { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' },
-        { Key: 'AdminPIN', Value: '123456' } // FITUR BARU: PIN Admin disimpan di Database
+        { Key: 'AdminPIN', Value: '123456' } 
     ],
     categories: [
         { ID: 'C1', Name: 'Makanan Utama', Icon: 'bi-egg-fried' },
@@ -565,7 +574,6 @@ window.renderCart = function() {
     document.getElementById('cart-items-container').innerHTML = html; document.getElementById('cart-total').innerText = window.formatRp(subtotal);
 };
 
-// -- FITUR BARU: Toggle Waktu Pesanan --
 window.toggleTiming = function() {
     var timing = document.getElementById('order-timing').value;
     document.getElementById('timing-group').style.display = timing === 'PreOrder' ? 'flex' : 'none';
@@ -652,6 +660,17 @@ window.startAdminPolling = function() {
                 db.orders.push({ OrderID: simID, Date: new Date(), CustomerName: 'Pelanggan Online', CustomerPhone: '0812', OrderType: 'TakeAway', TotalAmount: 25000, PaymentMethod: 'QRIS', Status: 'Baru', ItemsJSON: '[{"name":"Bakmi Goreng Spesial","qty":1,"price":25000}]' });
                 window.handleNewOrderReceived();
             }
+        } else {
+             fetch(GAS_API_URL + "?action=getAllData")
+            .then(response => response.json())
+            .then(res => {
+                if(res.success !== false) {
+                    db.orders = res.orders || [];
+                    if(db.orders.length > lastKnownOrderCount) {
+                        window.handleNewOrderReceived();
+                    }
+                }
+            }).catch(e => console.error("Polling error", e));
         }
     }, 10000);
 };
@@ -690,7 +709,13 @@ window.renderAdminOrders = function() {
 };
 
 window.changeOrderStatus = function(orderId, newStatus) {
-    var order = db.orders.find(o => o.OrderID === orderId); if(order) order.Status = newStatus;
+    var order = db.orders.find(o => o.OrderID === orderId); 
+    if(order) order.Status = newStatus;
+    
+    if (APP_MODE !== 'DEMO' && GAS_API_URL) {
+         fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOrderStatus', payload: { OrderID: orderId, Status: newStatus } }) });
+    }
+    
     Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Status diperbarui', showConfirmButton: false, timer: 1000});
     window.renderAdminOrders(); window.renderAdminDashboard();
 };
@@ -754,7 +779,15 @@ window.saveAdminMenu = function() {
         CategoryID: document.getElementById('menu-cat').value, Label: document.getElementById('menu-label').value, Status: 'Aktif'
     };
     if(!data.Name || !data.Price || !data.Image) { alert("Nama, Harga, dan Gambar wajib diisi!"); return; }
-    if(id) { var idx = db.menus.findIndex(m => m.ID === id); if(idx !== -1) db.menus[idx] = data; } else { db.menus.unshift(data); }
+    
+    if(id) { 
+        var idx = db.menus.findIndex(m => m.ID === id); 
+        if(idx !== -1) db.menus[idx] = data; 
+        if (APP_MODE !== 'DEMO' && GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateMenu', payload: data }) }); }
+    } else { 
+        db.menus.unshift(data); 
+        if (APP_MODE !== 'DEMO' && GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMenu', payload: data }) }); }
+    }
     window.closeMenuForm(); window.renderAdminMenu(); window.renderHome();
     Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Tersimpan', showConfirmButton: false, timer: 1500});
 };
@@ -799,7 +832,6 @@ window.renderPOSCart = function() {
     document.getElementById('pos-total-price').innerText = window.formatRp(total);
 };
 
-// -- FITUR BARU: POS Checkout membaca Nama & Meja --
 window.processPOSCheckout = function() {
     if(state.posCart.length === 0) return;
     
@@ -812,7 +844,8 @@ window.processPOSCheckout = function() {
     
     db.orders.push(orderData); state.posCart = []; window.renderPOSCart(); window.renderAdminDashboard();
     
-    // Reset input nama dan meja setelah bayar
+    if (APP_MODE !== 'DEMO' && GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveOrder', payload: orderData }) }); }
+    
     document.getElementById('pos-cust-name').value = '';
     document.getElementById('pos-table-no').value = '';
 
@@ -851,7 +884,6 @@ window.navigate = function(view) {
     if(view === 'checkout') { window.toggleAddress(); window.togglePaymentInfo(); window.toggleTiming(); }
 };
 
-// -- FITUR BARU: Keamanan Login Admin (Dinamis dari Database) --
 window.toggleRole = function() {
     if(state.role === 'guest') {
         Swal.fire({
@@ -865,7 +897,6 @@ window.toggleRole = function() {
             confirmButtonColor: '#12295d'
         }).then((result) => {
             if(result.isConfirmed) {
-                // Ambil PIN dari database settings (default 123456 jika klien belum setting)
                 var pinSetting = (db.settings || []).find(s => s.Key === 'AdminPIN');
                 var validPin = pinSetting ? pinSetting.Value : '123456';
                 
@@ -886,7 +917,6 @@ window.toggleRole = function() {
     }
 };
 
-// -- FITUR BARU: Menu Klien untuk Mengubah PIN --
 window.changeAdminPIN = function() {
     Swal.fire({
         title: 'Ganti PIN Admin',
@@ -901,7 +931,6 @@ window.changeAdminPIN = function() {
         if(result.isConfirmed && result.value) {
             var newPin = result.value;
             
-            // 1. Update PIN di memory aplikasi secara langsung
             var pinSetting = db.settings.find(s => s.Key === 'AdminPIN');
             if (pinSetting) {
                 pinSetting.Value = newPin;
@@ -909,8 +938,7 @@ window.changeAdminPIN = function() {
                 db.settings.push({ Key: 'AdminPIN', Value: newPin });
             }
             
-            // 2. Nantinya blok ini untuk mengirim perintah simpan PIN ke Google Apps Script (Backend)
-            // if (GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSetting', payload: { Key: 'AdminPIN', Value: newPin } }) }); }
+            if (APP_MODE !== 'DEMO' && GAS_API_URL) { fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSetting', payload: { Key: 'AdminPIN', Value: newPin } }) }); }
             
             Swal.fire('Berhasil!', 'PIN Admin Anda berhasil diubah. Harap ingat PIN baru ini.', 'success');
         }
@@ -918,23 +946,17 @@ window.changeAdminPIN = function() {
 };
 
 // =======================================================
-// FITUR BARU: INTEGRASI VAULT KE DB MITRARESTO
+// FITUR BARU: INTEGRASI VAULT & DATA KLIEN ASLI
 // =======================================================
-const SUB_ID = "SUB-001"; // GANTI: Samakan dengan sub_id di tab Subscriptions (DB MitraResto)
-const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI"; // GANTI: Masukkan URL API MitraResto
 
 function checkSubscription() {
-    // Jika masih tahap trial/demo awal, langsung loloskan
     if (APP_MODE === "DEMO") return Promise.resolve(true);
 
     return fetch(MITRA_API_URL + "?action=checkVault&sub_id=" + SUB_ID)
         .then(response => response.json())
         .then(data => {
             if (data.status && data.status.toUpperCase() === "SUSPENDED") {
-                // Matikan loader agar tidak berputar di belakang layar
                 document.getElementById('loader').style.display = 'none'; 
-                
-                // Tampilkan pesan suspend
                 document.body.innerHTML = `
                     <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8d7da; color:#721c24; text-align:center; padding:20px;">
                         <i class="bi bi-exclamation-triangle-fill" style="font-size:4rem; margin-bottom:20px;"></i>
@@ -942,40 +964,64 @@ function checkSubscription() {
                         <p>Masa berlangganan aplikasi untuk layanan ini telah berakhir atau ditangguhkan sementara.</p>
                         <p style="font-size:0.9rem; margin-top:20px;">Silakan selesaikan tagihan Anda di panel MitraResto.</p>
                     </div>`;
-                return false; // Hentikan proses
+                return false; 
             }
-            return true; // Status Active, loloskan
+            return true; 
         })
         .catch(error => {
-            console.error("Gagal terhubung ke Vault MitraResto", error);
-            return true; // Fail-safe: Jika API error, biarkan aplikasi tetap jalan agar resto tidak rugi
+            console.error("Gagal terhubung ke Vault", error);
+            return true; 
+        });
+}
+
+function fetchClientData() {
+    return fetch(GAS_API_URL + "?action=getAllData")
+        .then(response => response.json())
+        .then(res => {
+            if (res.success !== false) {
+                db.settings = res.settings || [];
+                db.categories = res.categories || [];
+                db.menus = res.menus || [];
+                db.orders = res.orders || [];
+                return true;
+            } else {
+                throw new Error("Format API salah.");
+            }
+        })
+        .catch(err => {
+            console.error("Gagal ambil data klien:", err);
+            return false;
         });
 }
 
 function initApp() {
     window.setupPWA(); 
     
-    // Cek Vault dulu sebelum memuat aplikasi
     checkSubscription().then(isActive => {
-        if (!isActive) return; // Jika suspend, proses berhenti (layar merah)
-
-        // Jika lolos (Active), matikan loader dan jalankan aplikasi
-        document.getElementById('loader').style.display = 'none';
+        if (!isActive) return; 
 
         if (APP_MODE === 'DEMO') {
+            document.getElementById('loader').style.display = 'none';
             db = JSON.parse(JSON.stringify(mockDB));
             lastKnownOrderCount = db.orders.length;
             window.processInitData(); 
             window.renderCategories(); 
             window.navigate('home');
         } else {
-            // Nanti di sini logika fetch data asli Klien dari GAS Klien
-            // Sementara kita tampilkan mockDB agar tidak loading terus
-            db = JSON.parse(JSON.stringify(mockDB));
-            lastKnownOrderCount = db.orders.length;
-            window.processInitData(); 
-            window.renderCategories(); 
-            window.navigate('home');
+            document.getElementById('loader-text').innerText = "Menarik Data Toko...";
+            
+            fetchClientData().then(success => {
+                document.getElementById('loader').style.display = 'none';
+                
+                if (success) {
+                    lastKnownOrderCount = db.orders.length;
+                    window.processInitData(); 
+                    window.renderCategories(); 
+                    window.navigate('home');
+                } else {
+                    Swal.fire('Error', 'Gagal memuat data menu dari server. Pastikan URL Database (GAS) sudah benar.', 'error');
+                }
+            });
         }
     });
 }
