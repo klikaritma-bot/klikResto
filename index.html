@@ -153,7 +153,7 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" width="40" class="mb-2">
                 <h6 class="fw-bold text-primary-custom mb-1">Ingin punya WebApp seperti ini?</h6>
                 <p class="small text-muted mb-3">Aplikasi kasir & pemesanan online tanpa potongan komisi, khusus untuk warung & restoran Anda.</p>
-                <a href="https://mitraresto.kliksistem.com/?buy=setup" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
+                <a href="https://mitraresto.kliksistem.com/?buy=setup" id="cta-buatapp-link" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
             </div>
         </div>
 
@@ -440,6 +440,11 @@ var mockDB = {
     ]
 };
 
+// Fallback gambar berbasis data URI (SVG inline) — TIDAK butuh koneksi
+// internet sama sekali, jadi tidak akan pernah gagal (beda dari layanan
+// eksternal seperti via.placeholder.com yang sering down/tidak stabil).
+const FALLBACK_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27150%27%3E%3Crect width=%27100%25%27 height=%27100%25%27 fill=%27%23e2e8f0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2713%27 fill=%27%2394a3b8%27%3EFoto Menu%3C/text%3E%3C/svg%3E";
+
 var blankDB = { settings: [], categories: [], menus: [], orders: [] };
 var db = { settings: [], categories: [], menus: [], orders: [] };
 var state = { cart: [], posCart: [], currentView: 'home', role: 'guest', activeCategory: 'All', adminTab: 'dashboard' };
@@ -463,7 +468,36 @@ window.setupPWA = function() {
 
 window.formatRp = function(angka) { return "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
+// =======================================================
+// PENANGKAP & PENERUS REFERRAL AFFILIATE (LINTAS SUBDOMAIN)
+// =======================================================
+// Bug lama: tombol "Buat Aplikasi Saya" hardcoded ke ?buy=setup saja,
+// sehingga ?ref=CODE dari link Mitra hilang begitu prospek klik tombol.
+// Fix: teruskan ref lewat URL langsung (paling andal, tidak bergantung
+// cookie/localStorage), plus simpan cookie lintas-subdomain sebagai
+// lapisan pengaman tambahan.
+function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=.kliksistem.com; SameSite=Lax; Secure`;
+}
+
+function captureAndForwardReferral() {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (!refCode) return;
+
+    setCookie('mitraresto_ref', refCode, 30);
+
+    const ctaLink = document.getElementById('cta-buatapp-link');
+    if (ctaLink) {
+        ctaLink.href = `https://mitraresto.kliksistem.com/?buy=setup&ref=${encodeURIComponent(refCode)}`;
+        console.log("Referral diteruskan ke tombol CTA:", refCode);
+    }
+}
+
 window.processInitData = function() {
+    captureAndForwardReferral();
+
     var restoName = 'klikResto'; var restoAddress = 'Lokasi...'; var wa = '6281234567890';
     (db.settings || []).forEach(s => {
         if(s.Key === 'RestoName' && s.Value) restoName = s.Value;
@@ -519,7 +553,7 @@ window.renderHome = function() {
 
             html += `<div class="menu-card-grid">
                         ${badgeHtml}
-                        <img src="${menu.Image}" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
+                        <img src="${menu.Image || FALLBACK_IMG}" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
                         <div class="title">${menu.Name}</div>
                         ${priceHtml}
                         ${btnHtml}
@@ -745,7 +779,7 @@ window.renderAdminMenu = function() {
     (db.menus || []).forEach(m => {
         var labelHtml = m.Label ? `<span class="badge bg-secondary ms-1" style="font-size:0.6rem">${m.Label}</span>` : '';
         html += `<div class="d-flex align-items-center mb-2 pb-2 border-bottom">
-            <img src="${m.Image}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+            <img src="${m.Image || FALLBACK_IMG}" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
             <div class="ms-2 flex-grow-1"><div class="fw-bold" style="font-size:0.85rem;">${m.Name} ${labelHtml}</div>
             <div class="text-secondary small">${window.formatRp(m.Price)}</div></div>
             <div><button class="btn btn-sm text-primary" onclick="window.openMenuForm('${m.ID}')"><i class="bi bi-pencil-square"></i></button></div>
@@ -799,7 +833,7 @@ window.renderAdminPOSMenu = function() {
     filtered.forEach(m => {
         var p = (m.PromoPrice > 0) ? m.PromoPrice : m.Price;
         html += `<div style="width: 48%; background:white; border:1px solid #ddd; border-radius:8px; padding:5px; text-align:center; cursor:pointer;" onclick="window.addPOSItem('${m.ID}')">
-            <img src="${m.Image}" style="width:100%; height:50px; object-fit:cover; border-radius:5px; margin-bottom:3px;">
+            <img src="${m.Image || FALLBACK_IMG}" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" style="width:100%; height:50px; object-fit:cover; border-radius:5px; margin-bottom:3px;">
             <div style="font-size:0.65rem; font-weight:bold; line-height:1.1; height:15px; overflow:hidden;">${m.Name}</div>
             <div style="font-size:0.65rem; color:var(--secondary);">${window.formatRp(p)}</div>
         </div>`;
