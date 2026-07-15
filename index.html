@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Meta Tags PWA -->
     <meta name="theme-color" content="#12295d">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -153,7 +152,8 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" width="40" class="mb-2">
                 <h6 class="fw-bold text-primary-custom mb-1">Ingin punya WebApp seperti ini?</h6>
                 <p class="small text-muted mb-3">Aplikasi kasir & pemesanan online tanpa potongan komisi, khusus untuk warung & restoran Anda.</p>
-                <a href="https://mitraresto.kliksistem.com/?buy=setup" id="cta-buatapp-link" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
+                <!-- MENUJU JALUR TOL MITRARESTO (EXPRESS CHECKOUT) -->
+                <a href="#" id="cta-buatapp-link" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
             </div>
         </div>
 
@@ -183,7 +183,6 @@
             <div class="admin-card">
                 <form id="checkout-form">
                     
-                    <!-- FITUR BARU: Waktu Pengiriman / Pre-Order -->
                     <div class="mb-3">
                         <label class="form-label small text-muted">Waktu Pesanan</label>
                         <select class="form-select rounded-pill" id="order-timing" onchange="window.toggleTiming()">
@@ -191,7 +190,6 @@
                             <option value="PreOrder">Pre-Order (Pilih Tanggal & Jam)</option>
                         </select>
                     </div>
-                    <!-- Pilihan Tanggal & Jam (Hidden by default) -->
                     <div class="mb-3 row g-2" id="timing-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px dashed #ccc;">
                         <div class="col-6">
                             <label class="form-label small text-muted">Tanggal</label>
@@ -270,7 +268,6 @@
                     </div>
                 </div>
                 
-                <!-- FITUR BARU: Tombol Ganti PIN -->
                 <button class="btn btn-outline-secondary w-100 fw-bold rounded-pill" onclick="window.changeAdminPIN()">
                     <i class="bi bi-key"></i> Ganti PIN Admin
                 </button>
@@ -286,16 +283,13 @@
                 <div class="alert alert-success p-2 small border-0"><i class="bi bi-shop"></i> Gunakan panel ini untuk memasukkan pesanan pelanggan yang datang ke toko.</div>
                 
                 <div class="row g-2">
-                    <!-- Katalog POS (Kiri) -->
                     <div class="col-7" style="height: 60vh; overflow-y:auto;">
                         <input type="text" class="form-control form-control-sm mb-2" id="pos-search" placeholder="Cari menu..." onkeyup="window.renderAdminPOSMenu()">
                         <div id="pos-menu-grid" class="d-flex flex-wrap gap-2"></div>
                     </div>
-                    <!-- Struk Kasir POS (Kanan) -->
                     <div class="col-5" style="height: 60vh; background:#fff; border-radius:10px; border:1px solid #ddd; display:flex; flex-direction:column;">
                         <h6 class="fw-bold p-2 mb-0 border-bottom bg-light" style="font-size:0.8rem; border-radius: 10px 10px 0 0;">Tagihan Kasir</h6>
                         
-                        <!-- FITUR BARU: Input Nama & Meja Pelanggan -->
                         <div class="p-2 border-bottom bg-light">
                             <input type="text" class="form-control form-control-sm mb-1" id="pos-cust-name" placeholder="Nama Pelanggan (Cth: Budi)">
                             <input type="text" class="form-control form-control-sm" id="pos-table-no" placeholder="No. Meja (Cth: Meja 4)">
@@ -403,18 +397,17 @@
 
 <script>
 // =======================================================
-// 1. KONFIGURASI UTAMA (UBAH SAAT ONBOARDING KLIEN)
+// 1. KONFIGURASI UTAMA
 // =======================================================
-const APP_MODE = "DEMO"; // Ganti menjadi "CLIENT" jika untuk toko Klien
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; // Ganti dengan URL GAS Client
+const APP_MODE = "DEMO"; 
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec";
 
 // =======================================================
-// 2. KONFIGURASI VAULT (PENGUNCI OTOMATIS)
+// 2. KONFIGURASI VAULT
 // =======================================================
-const SUB_ID = "SUB-001"; // Samakan dengan sub_id di tab Subscriptions (DB MitraResto)
-const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI"; // URL WebApp MitraResto
+const SUB_ID = "SUB-001"; 
+const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI";
 
-// Data Dummy untuk Mode Demo
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
@@ -440,9 +433,6 @@ var mockDB = {
     ]
 };
 
-// Fallback gambar berbasis data URI (SVG inline) — TIDAK butuh koneksi
-// internet sama sekali, jadi tidak akan pernah gagal (beda dari layanan
-// eksternal seperti via.placeholder.com yang sering down/tidak stabil).
 const FALLBACK_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27150%27%3E%3Crect width=%27100%25%27 height=%27100%25%27 fill=%27%23e2e8f0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2713%27 fill=%27%2394a3b8%27%3EFoto Menu%3C/text%3E%3C/svg%3E";
 
 var blankDB = { settings: [], categories: [], menus: [], orders: [] };
@@ -469,13 +459,8 @@ window.setupPWA = function() {
 window.formatRp = function(angka) { return "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
 // =======================================================
-// PENANGKAP & PENERUS REFERRAL AFFILIATE (LINTAS SUBDOMAIN)
+// PENERUS REFERRAL KE JALUR TOL (EXPRESS CHECKOUT)
 // =======================================================
-// Bug lama: tombol "Buat Aplikasi Saya" hardcoded ke ?buy=setup saja,
-// sehingga ?ref=CODE dari link Mitra hilang begitu prospek klik tombol.
-// Fix: teruskan ref lewat URL langsung (paling andal, tidak bergantung
-// cookie/localStorage), plus simpan cookie lintas-subdomain sebagai
-// lapisan pengaman tambahan.
 function setCookie(name, value, days) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=.kliksistem.com; SameSite=Lax; Secure`;
@@ -484,14 +469,19 @@ function setCookie(name, value, days) {
 function captureAndForwardReferral() {
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref');
-    if (!refCode) return;
-
-    setCookie('mitraresto_ref', refCode, 30);
+    
+    let expressUrl = `https://mitraresto.kliksistem.com/?action=express`;
+    
+    if (refCode) {
+        setCookie('mitraresto_ref', refCode, 30);
+        expressUrl += `&ref=${encodeURIComponent(refCode)}`;
+    }
 
     const ctaLink = document.getElementById('cta-buatapp-link');
     if (ctaLink) {
-        ctaLink.href = `https://mitraresto.kliksistem.com/?buy=setup&ref=${encodeURIComponent(refCode)}`;
-        console.log("Referral diteruskan ke tombol CTA:", refCode);
+        // Tombol CTA sekarang mengarah ke action=express
+        ctaLink.href = expressUrl;
+        console.log("Tombol CTA disiapkan dengan:", expressUrl);
     }
 }
 
