@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Meta Tags PWA -->
     <meta name="theme-color" content="#12295d">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -107,6 +108,15 @@
         /* Modal Admin Form */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center;}
         .modal-box { background: white; width: 90%; max-width: 450px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto;}
+
+        /* FITUR BARU: Modal Detail Produk (popup saat klik menu) */
+        .modal-box-detail { background: white; width: 90%; max-width: 420px; border-radius: 18px; overflow: hidden; max-height: 88vh; display: flex; flex-direction: column; }
+        .detail-img-wrap { position: relative; flex-shrink: 0; }
+        .detail-img-wrap img { width: 100%; height: 190px; object-fit: cover; display: block; }
+        .detail-close-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.45); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .detail-body { padding: 16px 18px; overflow-y: auto; }
+        .loyalty-banner-progress { background: #fff3cd; color: #664d03; }
+        .loyalty-banner-reward { background: #198754; color: white; }
     </style>
 </head>
 <body>
@@ -152,8 +162,7 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" width="40" class="mb-2">
                 <h6 class="fw-bold text-primary-custom mb-1">Ingin punya WebApp seperti ini?</h6>
                 <p class="small text-muted mb-3">Aplikasi kasir & pemesanan online tanpa potongan komisi, khusus untuk warung & restoran Anda.</p>
-                <!-- MENUJU JALUR TOL MITRARESTO (EXPRESS CHECKOUT) -->
-                <a href="#" id="cta-buatapp-link" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
+                <a href="https://mitraresto.kliksistem.com/?buy=setup" id="cta-buatapp-link" target="_blank" class="btn btn-sm btn-primary-custom rounded-pill fw-bold px-4">Buat Aplikasi Saya</a>
             </div>
         </div>
 
@@ -183,6 +192,7 @@
             <div class="admin-card">
                 <form id="checkout-form">
                     
+                    <!-- FITUR BARU: Waktu Pengiriman / Pre-Order -->
                     <div class="mb-3">
                         <label class="form-label small text-muted">Waktu Pesanan</label>
                         <select class="form-select rounded-pill" id="order-timing" onchange="window.toggleTiming()">
@@ -190,6 +200,7 @@
                             <option value="PreOrder">Pre-Order (Pilih Tanggal & Jam)</option>
                         </select>
                     </div>
+                    <!-- Pilihan Tanggal & Jam (Hidden by default) -->
                     <div class="mb-3 row g-2" id="timing-group" style="display: none; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px dashed #ccc;">
                         <div class="col-6">
                             <label class="form-label small text-muted">Tanggal</label>
@@ -215,8 +226,9 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted">Nomor WhatsApp</label>
-                        <input type="number" class="form-control rounded-pill" id="cust-phone" required placeholder="0812...">
+                        <input type="number" class="form-control rounded-pill" id="cust-phone" required placeholder="0812..." onblur="window.checkLoyalty()">
                     </div>
+                    <div id="loyalty-banner" style="display:none;" class="mb-3 p-2 rounded-3 text-center small fw-bold"></div>
                     <div class="mb-3" id="address-group">
                         <label class="form-label small text-muted">Alamat Lengkap / Nomor Meja</label>
                         <textarea class="form-control rounded-4" id="cust-address" rows="3" placeholder="Nama jalan, patokan / Nomor Meja..."></textarea>
@@ -268,6 +280,7 @@
                     </div>
                 </div>
                 
+                <!-- FITUR BARU: Tombol Ganti PIN -->
                 <button class="btn btn-outline-secondary w-100 fw-bold rounded-pill" onclick="window.changeAdminPIN()">
                     <i class="bi bi-key"></i> Ganti PIN Admin
                 </button>
@@ -283,13 +296,16 @@
                 <div class="alert alert-success p-2 small border-0"><i class="bi bi-shop"></i> Gunakan panel ini untuk memasukkan pesanan pelanggan yang datang ke toko.</div>
                 
                 <div class="row g-2">
+                    <!-- Katalog POS (Kiri) -->
                     <div class="col-7" style="height: 60vh; overflow-y:auto;">
                         <input type="text" class="form-control form-control-sm mb-2" id="pos-search" placeholder="Cari menu..." onkeyup="window.renderAdminPOSMenu()">
                         <div id="pos-menu-grid" class="d-flex flex-wrap gap-2"></div>
                     </div>
+                    <!-- Struk Kasir POS (Kanan) -->
                     <div class="col-5" style="height: 60vh; background:#fff; border-radius:10px; border:1px solid #ddd; display:flex; flex-direction:column;">
                         <h6 class="fw-bold p-2 mb-0 border-bottom bg-light" style="font-size:0.8rem; border-radius: 10px 10px 0 0;">Tagihan Kasir</h6>
                         
+                        <!-- FITUR BARU: Input Nama & Meja Pelanggan -->
                         <div class="p-2 border-bottom bg-light">
                             <input type="text" class="form-control form-control-sm mb-1" id="pos-cust-name" placeholder="Nama Pelanggan (Cth: Budi)">
                             <input type="text" class="form-control form-control-sm" id="pos-table-no" placeholder="No. Meja (Cth: Meja 4)">
@@ -393,21 +409,50 @@
     </div>
 </div>
 
+<!-- FITUR BARU: Modal Detail Produk (muncul saat kartu menu diklik) -->
+<div class="modal-overlay" id="product-detail-modal">
+    <div class="modal-box-detail">
+        <div class="detail-img-wrap">
+            <img id="detail-img" src="" alt="">
+            <button type="button" class="detail-close-btn" onclick="window.closeProductDetail()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="detail-body">
+            <h5 class="fw-bold mb-1" id="detail-name"></h5>
+            <div class="fs-6 mb-2" id="detail-price"></div>
+            <p class="text-muted small mb-3" id="detail-desc"></p>
+            <div class="mb-3">
+                <label class="form-label small text-muted">Catatan (opsional)</label>
+                <textarea id="detail-note" class="form-control rounded-3" rows="2" placeholder="Contoh: pedas level 2, tanpa bawang..."></textarea>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3" id="detail-qty-group">
+                <span class="small fw-bold text-muted">Jumlah</span>
+                <div class="d-flex align-items-center bg-light rounded-pill p-1">
+                    <button type="button" class="btn btn-sm btn-link text-dark text-decoration-none" onclick="window.changeDetailQty(-1)"><i class="bi bi-dash-circle"></i></button>
+                    <span class="fw-bold px-3" id="detail-qty">1</span>
+                    <button type="button" class="btn btn-sm btn-link text-primary-custom text-decoration-none" onclick="window.changeDetailQty(1)"><i class="bi bi-plus-circle-fill"></i></button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary-custom w-100 fw-bold" id="detail-addbtn" onclick="window.confirmAddToCart()">Tambah ke Keranjang</button>
+        </div>
+    </div>
+</div>
+
 <audio id="order-sound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
 
 <script>
 // =======================================================
-// 1. KONFIGURASI UTAMA
+// 1. KONFIGURASI UTAMA (UBAH SAAT ONBOARDING KLIEN)
 // =======================================================
-const APP_MODE = "DEMO"; 
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec";
+const APP_MODE = "DEMO"; // Ganti menjadi "CLIENT" jika untuk toko Klien
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBB2HSLOO37wV8fFFFd1L2jDBKh3fcMSfDLC0oj3Fc0vl8ju8Z9qRabAVEvbGVlauPIw/exec"; // Ganti dengan URL GAS Client
 
 // =======================================================
-// 2. KONFIGURASI VAULT
+// 2. KONFIGURASI VAULT (PENGUNCI OTOMATIS)
 // =======================================================
-const SUB_ID = "SUB-001"; 
-const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI";
+const SUB_ID = "SUB-001"; // Samakan dengan sub_id di tab Subscriptions (DB MitraResto)
+const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI"; // URL WebApp MitraResto
 
+// Data Dummy untuk Mode Demo
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
@@ -415,7 +460,8 @@ var mockDB = {
         { Key: 'Address', Value: 'Marison Regency 3 Blok L23 Solo' },
         { Key: 'Rekening', Value: 'BCA 0123456789 a.n. klikResto' },
         { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' },
-        { Key: 'AdminPIN', Value: '123456' } 
+        { Key: 'AdminPIN', Value: '123456' },
+        { Key: 'LoyaltyTarget', Value: '10' }
     ],
     categories: [
         { ID: 'C1', Name: 'Makanan Utama', Icon: 'bi-egg-fried' },
@@ -433,6 +479,9 @@ var mockDB = {
     ]
 };
 
+// Fallback gambar berbasis data URI (SVG inline) — TIDAK butuh koneksi
+// internet sama sekali, jadi tidak akan pernah gagal (beda dari layanan
+// eksternal seperti via.placeholder.com yang sering down/tidak stabil).
 const FALLBACK_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27150%27%3E%3Crect width=%27100%25%27 height=%27100%25%27 fill=%27%23e2e8f0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27sans-serif%27 font-size=%2713%27 fill=%27%2394a3b8%27%3EFoto Menu%3C/text%3E%3C/svg%3E";
 
 var blankDB = { settings: [], categories: [], menus: [], orders: [] };
@@ -458,9 +507,52 @@ window.setupPWA = function() {
 
 window.formatRp = function(angka) { return "Rp " + (angka || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
+// Dipakai buat samain format nomor HP sebelum dibandingkan (0812... vs 62812...)
+window.normalizePhone = function(p) {
+    if (!p) return '';
+    var n = p.toString().replace(/[^0-9]/g, '');
+    if (n.startsWith('0')) n = '62' + n.substring(1);
+    if (n && !n.startsWith('62')) n = '62' + n;
+    return n;
+};
+
+// FITUR BARU: loyalty digital sederhana — dihitung langsung dari data
+// order yang sudah ada di memori (db.orders, hasil getAllData), jadi
+// tidak perlu endpoint/API baru di backend.
+window.checkLoyalty = function() {
+    var phoneInput = document.getElementById('cust-phone').value.trim();
+    var banner = document.getElementById('loyalty-banner');
+    if (!banner) return;
+    if (!phoneInput || phoneInput.length < 8) { banner.style.display = 'none'; return; }
+
+    var targetSetting = (db.settings || []).find(s => s.Key === 'LoyaltyTarget');
+    var target = targetSetting ? (parseInt(targetSetting.Value) || 10) : 10;
+    var normPhone = window.normalizePhone(phoneInput);
+
+    var count = (db.orders || []).filter(o =>
+        window.normalizePhone(o.CustomerPhone) === normPhone && o.Status === 'Selesai'
+    ).length;
+
+    if (count === 0) { banner.style.display = 'none'; return; }
+
+    banner.style.display = 'block';
+    if (count >= target) {
+        banner.className = 'mb-3 p-2 rounded-3 text-center small fw-bold loyalty-banner-reward';
+        banner.innerHTML = '🎉 Selamat! Kamu sudah pesan ' + count + 'x. Tunjukkan pesan ini ke kasir untuk klaim reward!';
+    } else {
+        banner.className = 'mb-3 p-2 rounded-3 text-center small fw-bold loyalty-banner-progress';
+        banner.innerHTML = '🎉 Ini pesanan ke-' + count + ' kamu! ' + (target - count) + ' lagi menuju reward spesial.';
+    }
+};
+
 // =======================================================
-// PENERUS REFERRAL KE JALUR TOL (EXPRESS CHECKOUT)
+// PENANGKAP & PENERUS REFERRAL AFFILIATE (LINTAS SUBDOMAIN)
 // =======================================================
+// Bug lama: tombol "Buat Aplikasi Saya" hardcoded ke ?buy=setup saja,
+// sehingga ?ref=CODE dari link Mitra hilang begitu prospek klik tombol.
+// Fix: teruskan ref lewat URL langsung (paling andal, tidak bergantung
+// cookie/localStorage), plus simpan cookie lintas-subdomain sebagai
+// lapisan pengaman tambahan.
 function setCookie(name, value, days) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=.kliksistem.com; SameSite=Lax; Secure`;
@@ -469,19 +561,14 @@ function setCookie(name, value, days) {
 function captureAndForwardReferral() {
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref');
-    
-    let expressUrl = `https://mitraresto.kliksistem.com/?action=express`;
-    
-    if (refCode) {
-        setCookie('mitraresto_ref', refCode, 30);
-        expressUrl += `&ref=${encodeURIComponent(refCode)}`;
-    }
+    if (!refCode) return;
+
+    setCookie('mitraresto_ref', refCode, 30);
 
     const ctaLink = document.getElementById('cta-buatapp-link');
     if (ctaLink) {
-        // Tombol CTA sekarang mengarah ke action=express
-        ctaLink.href = expressUrl;
-        console.log("Tombol CTA disiapkan dengan:", expressUrl);
+        ctaLink.href = `https://mitraresto.kliksistem.com/?buy=setup&ref=${encodeURIComponent(refCode)}`;
+        console.log("Referral diteruskan ke tombol CTA:", refCode);
     }
 }
 
@@ -541,12 +628,12 @@ window.renderHome = function() {
                 btnHtml = `<button class="add-btn-full disabled" disabled>Habis</button>`;
             }
 
-            html += `<div class="menu-card-grid">
+            html += `<div class="menu-card-grid" onclick="window.openProductDetail('${menu.ID}')" style="cursor:pointer;">
                         ${badgeHtml}
                         <img src="${menu.Image || FALLBACK_IMG}" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
                         <div class="title">${menu.Name}</div>
                         ${priceHtml}
-                        ${btnHtml}
+                        <div onclick="event.stopPropagation()">${btnHtml}</div>
                     </div>`;
         });
     }
@@ -556,21 +643,86 @@ window.renderHome = function() {
 window.filterCategory = function(catId) { state.activeCategory = catId; window.renderCategories(); window.renderHome(); };
 window.filterMenu = function() { window.renderHome(); };
 
+window.makeCartItemId = function() { return 'ci' + Date.now() + Math.floor(Math.random() * 1000); };
+
 window.addToCart = function(menuId) {
     var menu = (db.menus || []).find(m => m.ID === menuId);
     if(!menu || menu.Label === 'Kosong') { if(typeof Swal !== 'undefined') Swal.fire('Maaf', 'Menu ini sedang kosong/habis.', 'error'); return; }
-    var exist = state.cart.find(i => i.id === menuId);
+    // Hanya digabung dengan entri keranjang yang SAMA dan TANPA catatan —
+    // item dengan catatan berbeda (dari popup detail) sengaja dibuat baris
+    // terpisah supaya catatannya tidak tertukar/tercampur.
+    var exist = state.cart.find(i => i.id === menuId && !i.note);
     var price = (menu.PromoPrice && menu.PromoPrice > 0) ? menu.PromoPrice : menu.Price;
-    
-    if (exist) exist.qty += 1; else state.cart.push({ id: menu.ID, name: menu.Name, price: price, qty: 1, image: menu.Image });
+
+    if (exist) exist.qty += 1; else state.cart.push({ cartItemId: window.makeCartItemId(), id: menu.ID, name: menu.Name, price: price, qty: 1, image: menu.Image, note: '' });
     if(typeof Swal !== 'undefined') Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Ditambahkan', showConfirmButton: false, timer: 1000});
     window.updateCartBadge(); if(state.currentView === 'home') document.getElementById('floating-cart').style.display = 'flex';
 };
 
-window.changeQty = function(id, change) {
-    var idx = state.cart.findIndex(i => i.id === id);
+window.changeQty = function(cartItemId, change) {
+    var idx = state.cart.findIndex(i => i.cartItemId === cartItemId);
     if(idx !== -1) { state.cart[idx].qty += change; if(state.cart[idx].qty <= 0) state.cart.splice(idx, 1); }
     window.updateCartBadge(); window.renderCart();
+};
+
+// FITUR BARU: popup deskripsi produk + catatan + qty, dibuka saat kartu menu diklik
+window.openProductDetail = function(menuId) {
+    var menu = (db.menus || []).find(m => m.ID === menuId);
+    if (!menu) return;
+    state.detailMenuId = menuId;
+    state.detailQty = 1;
+
+    document.getElementById('detail-img').src = menu.Image || FALLBACK_IMG;
+    document.getElementById('detail-img').onerror = function() { this.onerror = null; this.src = FALLBACK_IMG; };
+    document.getElementById('detail-name').innerText = menu.Name;
+    document.getElementById('detail-desc').innerText = menu.Description || 'Tidak ada deskripsi tambahan.';
+
+    var priceHtml = window.formatRp(menu.Price);
+    if (menu.PromoPrice && menu.PromoPrice > 0) {
+        priceHtml = '<span class="text-danger fw-bold">' + window.formatRp(menu.PromoPrice) + '</span> <small class="text-muted text-decoration-line-through">' + window.formatRp(menu.Price) + '</small>';
+    } else {
+        priceHtml = '<span class="fw-bold text-primary-custom">' + priceHtml + '</span>';
+    }
+    document.getElementById('detail-price').innerHTML = priceHtml;
+    document.getElementById('detail-qty').innerText = '1';
+    document.getElementById('detail-note').value = '';
+
+    var isSoldOut = menu.Label === 'Kosong';
+    var addBtn = document.getElementById('detail-addbtn');
+    addBtn.disabled = isSoldOut;
+    addBtn.innerText = isSoldOut ? 'Habis' : 'Tambah ke Keranjang';
+    document.getElementById('detail-qty-group').style.display = isSoldOut ? 'none' : 'flex';
+
+    document.getElementById('product-detail-modal').style.display = 'flex';
+};
+
+window.closeProductDetail = function() { document.getElementById('product-detail-modal').style.display = 'none'; };
+
+window.changeDetailQty = function(delta) {
+    state.detailQty = Math.max(1, (state.detailQty || 1) + delta);
+    document.getElementById('detail-qty').innerText = state.detailQty;
+};
+
+window.confirmAddToCart = function() {
+    var menu = (db.menus || []).find(m => m.ID === state.detailMenuId);
+    if (!menu || menu.Label === 'Kosong') return;
+
+    var qty = state.detailQty || 1;
+    var note = (document.getElementById('detail-note').value || '').trim();
+    var price = (menu.PromoPrice && menu.PromoPrice > 0) ? menu.PromoPrice : menu.Price;
+
+    if (!note) {
+        var exist = state.cart.find(i => i.id === menu.ID && !i.note);
+        if (exist) exist.qty += qty;
+        else state.cart.push({ cartItemId: window.makeCartItemId(), id: menu.ID, name: menu.Name, price: price, qty: qty, image: menu.Image, note: '' });
+    } else {
+        // Catatan berbeda -> selalu jadi baris keranjang tersendiri
+        state.cart.push({ cartItemId: window.makeCartItemId(), id: menu.ID, name: menu.Name, price: price, qty: qty, image: menu.Image, note: note });
+    }
+
+    window.closeProductDetail();
+    if(typeof Swal !== 'undefined') Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Ditambahkan', showConfirmButton: false, timer: 1000});
+    window.updateCartBadge(); if(state.currentView === 'home') document.getElementById('floating-cart').style.display = 'flex';
 };
 
 window.updateCartBadge = function() {
@@ -593,7 +745,8 @@ window.renderCart = function() {
     var html = ''; var subtotal = 0;
     state.cart.forEach(item => {
         subtotal += (item.price * item.qty);
-        html += '<div class="cart-card"><img src="' + item.image + '" style="width:60px; height:60px; object-fit:cover; border-radius:10px;"><div class="ms-3 flex-grow-1"><div class="fw-bold">' + item.name + '</div><div class="text-primary-custom fw-bold">' + window.formatRp(item.price) + '</div></div><div class="d-flex align-items-center bg-light rounded-pill p-1"><button class="btn btn-sm btn-link text-dark text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', -1)"><i class="bi bi-dash-circle"></i></button><span class="fw-bold px-2">' + item.qty + '</span><button class="btn btn-sm btn-link text-primary-custom text-decoration-none" onclick="window.changeQty(\'' + item.id + '\', 1)"><i class="bi bi-plus-circle-fill"></i></button></div></div>';
+        var noteHtml = item.note ? '<div class="text-muted fst-italic" style="font-size:0.72rem;">Catatan: ' + item.note + '</div>' : '';
+        html += '<div class="cart-card"><img src="' + item.image + '" style="width:60px; height:60px; object-fit:cover; border-radius:10px;"><div class="ms-3 flex-grow-1"><div class="fw-bold">' + item.name + '</div>' + noteHtml + '<div class="text-primary-custom fw-bold">' + window.formatRp(item.price) + '</div></div><div class="d-flex align-items-center bg-light rounded-pill p-1"><button class="btn btn-sm btn-link text-dark text-decoration-none" onclick="window.changeQty(\'' + item.cartItemId + '\', -1)"><i class="bi bi-dash-circle"></i></button><span class="fw-bold px-2">' + item.qty + '</span><button class="btn btn-sm btn-link text-primary-custom text-decoration-none" onclick="window.changeQty(\'' + item.cartItemId + '\', 1)"><i class="bi bi-plus-circle-fill"></i></button></div></div>';
     });
     document.getElementById('cart-items-container').innerHTML = html; document.getElementById('cart-total').innerText = window.formatRp(subtotal);
 };
@@ -668,7 +821,10 @@ window.finishCheckout = function(orderID, data) {
     var waText = `*ORDER BARU*\nID: ${orderID}\nNama: ${data.name}\nTipe: ${data.type}\nWaktu: ${data.timing}\n`;
     if(data.type === 'Delivery') waText += `Alamat: ${data.address}\n`;
     waText += `Bayar: ${data.payment}\n\n*Item:*\n`;
-    data.cart.forEach(i => { waText += `- ${i.qty}x ${i.name} (${window.formatRp(i.price * i.qty)})\n`; });
+    data.cart.forEach(i => {
+        var noteText = i.note ? ` (Catatan: ${i.note})` : '';
+        waText += `- ${i.qty}x ${i.name}${noteText} (${window.formatRp(i.price * i.qty)})\n`;
+    });
     waText += `\n*TOTAL: ${window.formatRp(data.total)}*\n`;
     if(data.payment === 'Transfer' || data.payment === 'QRIS') waText += "_(Sertakan foto bukti pembayaran disini)_";
 
