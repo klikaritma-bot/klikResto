@@ -261,6 +261,7 @@
                 <div class="admin-tab" onclick="window.switchAdminTab('orders')" id="tab-orders">Daftar Order</div>
                 <div class="admin-tab" onclick="window.switchAdminTab('pos')" id="tab-pos"><i class="bi bi-calculator"></i> Kasir POS</div>
                 <div class="admin-tab" onclick="window.switchAdminTab('menu')" id="tab-menu">Kelola Menu</div>
+                <div class="admin-tab" onclick="window.switchAdminTab('settings')" id="tab-settings"><i class="bi bi-gear"></i> Pengaturan</div>
             </div>
 
             <!-- TAB: Dashboard -->
@@ -327,6 +328,37 @@
                     <button class="btn btn-sm btn-primary-custom fw-bold" onclick="window.openMenuForm(null)"><i class="bi bi-plus"></i> Menu Baru</button>
                 </div>
                 <div id="admin-menu-list"></div>
+            </div>
+
+            <!-- FITUR BARU: TAB Pengaturan -->
+            <div id="admin-sec-settings" class="admin-section-div">
+                <div class="admin-card">
+                    <div class="mb-2">
+                        <label class="small text-muted">Nama Resto/Warung</label>
+                        <input type="text" id="set-resto-name" class="form-control form-control-sm">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">Alamat</label>
+                        <input type="text" id="set-address" class="form-control form-control-sm">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">No. WA Admin <span class="text-muted">(terima notifikasi order baru, tombol WA customer)</span></label>
+                        <input type="text" id="set-wa-admin" class="form-control form-control-sm" placeholder="6281234567890">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">No. WA Pemilik <span class="text-muted">(terima rekap penjualan harian — kosongkan kalau sama dengan No. WA Admin)</span></label>
+                        <input type="text" id="set-wa-owner" class="form-control form-control-sm" placeholder="6281234567890">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small text-muted">No. Rekening <span class="text-muted">(ditampilkan saat customer pilih Transfer Bank)</span></label>
+                        <input type="text" id="set-rekening" class="form-control form-control-sm" placeholder="BCA 0123456789 a.n. ...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Link Gambar QRIS (URL)</label>
+                        <input type="url" id="set-qris" class="form-control form-control-sm">
+                    </div>
+                    <button class="btn btn-primary-custom w-100 fw-bold" onclick="window.saveAllSettings()">Simpan Pengaturan</button>
+                </div>
             </div>
         </div>
 
@@ -456,7 +488,7 @@ const MITRA_API_URL = "ISI_DENGAN_URL_GAS_MITRARESTO_ANDA_DISINI"; // URL WebApp
 var mockDB = {
     settings: [
         { Key: 'RestoName', Value: 'klikResto' },
-        { Key: 'WhatsAppNumber', Value: '6281328307335' },
+        { Key: 'WhatsAppNumber', Value: '6281234567890' },
         { Key: 'Address', Value: 'Marison Regency 3 Blok L23 Solo' },
         { Key: 'Rekening', Value: 'BCA 0123456789 a.n. klikResto' },
         { Key: 'QRIS_Image', Value: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' },
@@ -1044,6 +1076,7 @@ window.switchAdminTab = function(tabId) {
     if(tabId === 'orders') window.renderAdminOrders();
     if(tabId === 'pos') window.renderAdminPOSMenu();
     if(tabId === 'menu') window.renderAdminMenu();
+    if(tabId === 'settings') window.renderAdminSettings();
 };
 window.renderAdmin = function() { window.switchAdminTab(state.adminTab); };
 
@@ -1123,6 +1156,49 @@ window.changeAdminPIN = function() {
             Swal.fire('Berhasil!', 'PIN Admin Anda berhasil diubah. Harap ingat PIN baru ini.', 'success');
         }
     });
+};
+
+// =======================================================
+// FITUR BARU: PENGATURAN (Nama Resto, Alamat, No. WA Admin & Pemilik, dll)
+// =======================================================
+window.renderAdminSettings = function() {
+    function getVal(key) { var s = (db.settings || []).find(x => x.Key === key); return s ? s.Value : ''; }
+    document.getElementById('set-resto-name').value = getVal('RestoName');
+    document.getElementById('set-address').value = getVal('Address');
+    document.getElementById('set-wa-admin').value = getVal('WhatsAppNumber');
+    document.getElementById('set-wa-owner').value = getVal('OwnerWhatsAppNumber');
+    document.getElementById('set-rekening').value = getVal('Rekening');
+    document.getElementById('set-qris').value = getVal('QRIS_Image');
+};
+
+window.saveAllSettings = function() {
+    var updates = [
+        { Key: 'RestoName', Value: document.getElementById('set-resto-name').value },
+        { Key: 'Address', Value: document.getElementById('set-address').value },
+        { Key: 'WhatsAppNumber', Value: document.getElementById('set-wa-admin').value },
+        { Key: 'OwnerWhatsAppNumber', Value: document.getElementById('set-wa-owner').value },
+        { Key: 'Rekening', Value: document.getElementById('set-rekening').value },
+        { Key: 'QRIS_Image', Value: document.getElementById('set-qris').value }
+    ];
+
+    updates.forEach(function(u) {
+        var existing = db.settings.find(function(s) { return s.Key === u.Key; });
+        if (existing) existing.Value = u.Value; else db.settings.push(u);
+    });
+
+    if (APP_MODE !== 'DEMO' && GAS_API_URL) {
+        Promise.all(updates.map(function(u) {
+            return fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSetting', payload: u }) });
+        })).then(function() {
+            Swal.fire('Berhasil!', 'Pengaturan tersimpan.', 'success');
+            window.processInitData();
+        }).catch(function() {
+            Swal.fire('Error', 'Sebagian pengaturan gagal disimpan, cek koneksi internet.', 'error');
+        });
+    } else {
+        window.processInitData();
+        Swal.fire('Berhasil!', 'Pengaturan tersimpan (mode demo, tidak dikirim ke server).', 'success');
+    }
 };
 
 // =======================================================
